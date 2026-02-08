@@ -117,6 +117,7 @@ export default function HomePage() {
         style={{ display: 'block', width: '100%', height: '100%' }}
       />
       <div className="content-container">
+        <h1 className="tickets-text">Click To Book</h1>
         <a href="https://bnichettinad.cloud/" className="gif-container">
           <img
             src="/ez.gif"
@@ -124,7 +125,6 @@ export default function HomePage() {
             className="gif-image"
           />
         </a>
-        <h1 className="tickets-text">CLICK TO BOOK NOW</h1>
       </div>
       <style jsx>{`
         .content-container {
