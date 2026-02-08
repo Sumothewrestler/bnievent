@@ -573,17 +573,15 @@ export default function AdminDashboard() {
         }}
         >
           <div style={{
-            background: scanResult.success
-              ? 'linear-gradient(135deg, #28a745 0%, #20c997 100%)'
-              : 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)',
+            background: '#ffffff',
             borderRadius: '20px',
             padding: '40px',
             maxWidth: '500px',
             width: '100%',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
             position: 'relative',
             animation: scanResult.success ? 'bounceIn 0.5s ease-out' : 'shakeIn 0.5s ease-out',
-            color: 'white',
+            border: scanResult.success ? '3px solid #28a745' : '3px solid #dc3545',
           }}
           onClick={(e) => e.stopPropagation()}
           >
@@ -597,7 +595,7 @@ export default function AdminDashboard() {
                 position: 'absolute',
                 top: '15px',
                 right: '15px',
-                background: 'rgba(255, 255, 255, 0.2)',
+                background: '#f0f0f0',
                 border: 'none',
                 borderRadius: '50%',
                 width: '35px',
@@ -607,16 +605,22 @@ export default function AdminDashboard() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '20px',
-                color: 'white',
-                transition: 'background 0.2s ease',
+                color: '#666',
+                transition: 'all 0.2s ease',
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = '#e0e0e0'
+                e.currentTarget.style.color = '#000'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = '#f0f0f0'
+                e.currentTarget.style.color = '#666'
+              }}
             >
               ×
             </button>
 
-            {/* Icon/GIF */}
+            {/* Icon */}
             <div style={{
               display: 'flex',
               justifyContent: 'center',
@@ -624,37 +628,31 @@ export default function AdminDashboard() {
             }}>
               {scanResult.success ? (
                 <div style={{
-                  width: '120px',
-                  height: '120px',
+                  width: '90px',
+                  height: '90px',
                   borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '10px',
                   animation: 'pulse 1.5s ease-in-out infinite',
+                  boxShadow: '0 8px 20px rgba(40, 167, 69, 0.3)',
                 }}>
-                  <img
-                    src="/ez.gif"
-                    alt="Success"
-                    style={{
-                      width: '100px',
-                      height: '100px',
-                      objectFit: 'contain',
-                      filter: 'brightness(0) invert(1)',
-                    }}
-                  />
+                  <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
                 </div>
               ) : (
                 <div style={{
                   width: '90px',
                   height: '90px',
                   borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.3)',
+                  background: 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   animation: 'pulse 1.5s ease-in-out infinite',
+                  boxShadow: '0 8px 20px rgba(220, 53, 69, 0.3)',
                 }}>
                   <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -672,18 +670,18 @@ export default function AdminDashboard() {
               textAlign: 'center',
               marginBottom: '15px',
               fontFamily: "'Inter', sans-serif",
-              textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+              color: scanResult.success ? '#28a745' : '#dc3545',
             }}>
-              {scanResult.success ? '✓ TICKET FOUND!' : '✗ TICKET NOT FOUND'}
+              {scanResult.success ? 'TICKET FOUND!' : 'TICKET NOT FOUND'}
             </h2>
 
             {/* Details */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.2)',
+              background: '#f8f9fa',
               borderRadius: '12px',
               padding: '25px',
               marginBottom: '20px',
-              backdropFilter: 'blur(10px)',
+              border: '1px solid #e0e0e0',
             }}>
               {scanResult.success ? (
                 <>
@@ -692,14 +690,17 @@ export default function AdminDashboard() {
                       fontSize: '0.85rem',
                       fontWeight: '600',
                       marginBottom: '5px',
-                      opacity: 0.9,
+                      color: '#666',
                       fontFamily: "'Inter', sans-serif",
-                    }}>NAME</p>
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>Name</p>
                     <p style={{
                       fontSize: '1.3rem',
                       fontWeight: '700',
                       margin: 0,
                       fontFamily: "'Inter', sans-serif",
+                      color: '#333',
                     }}>{scanResult.name}</p>
                   </div>
 
@@ -708,14 +709,17 @@ export default function AdminDashboard() {
                       fontSize: '0.85rem',
                       fontWeight: '600',
                       marginBottom: '5px',
-                      opacity: 0.9,
+                      color: '#666',
                       fontFamily: "'Inter', sans-serif",
-                    }}>MOBILE</p>
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>Mobile</p>
                     <p style={{
                       fontSize: '1.3rem',
                       fontWeight: '700',
                       margin: 0,
                       fontFamily: "'Inter', sans-serif",
+                      color: '#333',
                     }}>{scanResult.mobile}</p>
                   </div>
 
@@ -725,14 +729,17 @@ export default function AdminDashboard() {
                         fontSize: '0.85rem',
                         fontWeight: '600',
                         marginBottom: '5px',
-                        opacity: 0.9,
+                        color: '#666',
                         fontFamily: "'Inter', sans-serif",
-                      }}>PAYMENT</p>
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>Payment</p>
                       <p style={{
                         fontSize: '1.1rem',
                         fontWeight: '700',
                         margin: 0,
                         fontFamily: "'Inter', sans-serif",
+                        color: scanResult.payment === 'SUCCESS' ? '#28a745' : '#ffc107',
                       }}>{scanResult.payment}</p>
                     </div>
                     <div style={{ flex: 1 }}>
@@ -740,14 +747,17 @@ export default function AdminDashboard() {
                         fontSize: '0.85rem',
                         fontWeight: '600',
                         marginBottom: '5px',
-                        opacity: 0.9,
+                        color: '#666',
                         fontFamily: "'Inter', sans-serif",
-                      }}>AMOUNT</p>
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>Amount</p>
                       <p style={{
                         fontSize: '1.1rem',
                         fontWeight: '700',
                         margin: 0,
                         fontFamily: "'Inter', sans-serif",
+                        color: '#333',
                       }}>₹{scanResult.amount}</p>
                     </div>
                   </div>
@@ -758,14 +768,17 @@ export default function AdminDashboard() {
                     fontSize: '0.85rem',
                     fontWeight: '600',
                     marginBottom: '5px',
-                    opacity: 0.9,
+                    color: '#666',
                     fontFamily: "'Inter', sans-serif",
-                  }}>TICKET NUMBER</p>
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>Ticket Number</p>
                   <p style={{
                     fontSize: '1.3rem',
                     fontWeight: '700',
                     margin: 0,
                     fontFamily: "'Inter', sans-serif",
+                    color: '#333',
                   }}>{scanResult.ticket}</p>
                 </div>
               )}
@@ -775,14 +788,17 @@ export default function AdminDashboard() {
                   fontSize: '0.85rem',
                   fontWeight: '600',
                   marginBottom: '5px',
-                  opacity: 0.9,
+                  color: '#666',
                   fontFamily: "'Inter', sans-serif",
-                }}>SCANNED AT</p>
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>Scanned At</p>
                 <p style={{
                   fontSize: '1rem',
                   fontWeight: '600',
                   margin: 0,
                   fontFamily: "'Inter', sans-serif",
+                  color: '#333',
                 }}>{scanResult.time}</p>
               </div>
             </div>
@@ -790,16 +806,18 @@ export default function AdminDashboard() {
             {/* Status Message */}
             <div style={{
               textAlign: 'center',
-              background: 'rgba(255, 255, 255, 0.2)',
+              background: scanResult.success ? '#e7f7ed' : '#ffe5e5',
               borderRadius: '8px',
               padding: '12px',
               marginBottom: '20px',
+              border: scanResult.success ? '1px solid #28a745' : '1px solid #dc3545',
             }}>
               <p style={{
                 fontSize: '1.1rem',
                 fontWeight: '700',
                 margin: 0,
                 fontFamily: "'Inter', sans-serif",
+                color: scanResult.success ? '#28a745' : '#dc3545',
               }}>
                 {scanResult.success ? '✅ Attendance Recorded!' : '⚠️ Scan Logged as Failed'}
               </p>
@@ -814,8 +832,10 @@ export default function AdminDashboard() {
               style={{
                 width: '100%',
                 padding: '16px',
-                background: 'rgba(255, 255, 255, 0.95)',
-                color: scanResult.success ? '#28a745' : '#dc3545',
+                background: scanResult.success
+                  ? 'linear-gradient(135deg, #28a745 0%, #20c997 100%)'
+                  : 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)',
+                color: 'white',
                 border: 'none',
                 borderRadius: '12px',
                 fontSize: '1.2rem',
@@ -823,17 +843,23 @@ export default function AdminDashboard() {
                 fontFamily: "'Inter', sans-serif",
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                boxShadow: scanResult.success
+                  ? '0 4px 15px rgba(40, 167, 69, 0.3)'
+                  : '0 4px 15px rgba(220, 53, 69, 0.3)',
                 textTransform: 'uppercase',
                 letterSpacing: '1px',
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.3)'
+                e.currentTarget.style.boxShadow = scanResult.success
+                  ? '0 6px 20px rgba(40, 167, 69, 0.4)'
+                  : '0 6px 20px rgba(220, 53, 69, 0.4)'
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)'
+                e.currentTarget.style.boxShadow = scanResult.success
+                  ? '0 4px 15px rgba(40, 167, 69, 0.3)'
+                  : '0 4px 15px rgba(220, 53, 69, 0.3)'
               }}
             >
               OK
@@ -932,14 +958,14 @@ export default function AdminDashboard() {
                 padding: 14px !important;
               }
 
-              div[style*="width: 120px"] {
-                width: 90px !important;
-                height: 90px !important;
-              }
-
-              div[style*="width: 120px"] img {
+              div[style*="width: 90px"][style*="height: 90px"] {
                 width: 70px !important;
                 height: 70px !important;
+              }
+
+              div[style*="width: 90px"] svg {
+                width: 35px !important;
+                height: 35px !important;
               }
 
               div[style*="padding: 40px"] {
