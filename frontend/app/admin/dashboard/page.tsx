@@ -212,12 +212,6 @@ export default function AdminDashboard() {
           ticket: scannedTicket.trim()
         })
         setShowScanResult(true)
-
-        // Auto-dismiss after 4 seconds
-        setTimeout(() => {
-          setShowScanResult(false)
-          setScanResult(null)
-        }, 4000)
       } else {
         // Log failed scan
         try {
@@ -250,12 +244,6 @@ export default function AdminDashboard() {
           ticket: scannedTicket.trim()
         })
         setShowScanResult(true)
-
-        // Auto-dismiss after 4 seconds
-        setTimeout(() => {
-          setShowScanResult(false)
-          setScanResult(null)
-        }, 4000)
       }
 
       setScannedTicket('')
@@ -797,6 +785,7 @@ export default function AdminDashboard() {
               background: 'rgba(255, 255, 255, 0.2)',
               borderRadius: '8px',
               padding: '12px',
+              marginBottom: '20px',
             }}>
               <p style={{
                 fontSize: '1.1rem',
@@ -807,6 +796,40 @@ export default function AdminDashboard() {
                 {scanResult.success ? '✅ Attendance Recorded!' : '⚠️ Scan Logged as Failed'}
               </p>
             </div>
+
+            {/* OK Button */}
+            <button
+              onClick={() => {
+                setShowScanResult(false)
+                setScanResult(null)
+              }}
+              style={{
+                width: '100%',
+                padding: '16px',
+                background: 'rgba(255, 255, 255, 0.95)',
+                color: scanResult.success ? '#28a745' : '#dc3545',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '1.2rem',
+                fontWeight: '800',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.3)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)'
+              }}
+            >
+              OK
+            </button>
           </div>
 
           {/* Animations */}
