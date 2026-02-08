@@ -118,7 +118,7 @@ export default function HomePage() {
       />
       <div className="content-container">
         <a href="https://bnichettinad.cloud/" className="book-button">
-          Book Tickets
+          Click To Book Tickets
         </a>
         <a href="https://bnichettinad.cloud/" className="gif-container">
           <img
@@ -167,7 +167,8 @@ export default function HomePage() {
           display: inline-block;
           padding: 20px 50px;
           margin-bottom: 40px;
-          background: #0066cc;
+          background: linear-gradient(135deg, #ff6600 0%, #ff9933 50%, #ff6600 100%);
+          background-size: 200% 100%;
           color: #ffffff;
           font-size: 1.8rem;
           font-weight: 700;
@@ -175,21 +176,31 @@ export default function HomePage() {
           font-family: 'Inter', 'Arial', 'Helvetica Neue', sans-serif;
           text-decoration: none;
           border-radius: 12px;
-          box-shadow: 0 8px 24px rgba(0, 102, 204, 0.4);
+          box-shadow: 0 8px 24px rgba(255, 102, 0, 0.4);
           transition: all 0.3s ease;
           cursor: pointer;
           border: none;
+          animation: gradientShimmer 3s ease infinite;
+        }
+
+        @keyframes gradientShimmer {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
         }
 
         .book-button:hover {
-          background: #0052a3;
           transform: translateY(-3px);
-          box-shadow: 0 12px 32px rgba(0, 102, 204, 0.5);
+          box-shadow: 0 12px 32px rgba(255, 102, 0, 0.5);
+          filter: brightness(1.1);
         }
 
         .book-button:active {
           transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
+          box-shadow: 0 6px 20px rgba(255, 102, 0, 0.4);
         }
 
         .gif-image {
