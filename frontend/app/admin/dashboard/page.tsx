@@ -41,6 +41,18 @@ export default function AdminDashboard() {
   const [scannerReady, setScannerReady] = useState(false)
   const scannerRef = useRef<any>(null)
 
+  // Scan result modal state
+  const [showScanResult, setShowScanResult] = useState(false)
+  const [scanResult, setScanResult] = useState<{
+    success: boolean
+    name?: string
+    mobile?: string
+    payment?: string
+    amount?: string
+    time: string
+    ticket: string
+  } | null>(null)
+
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (!token) {
@@ -189,7 +201,23 @@ export default function AdminDashboard() {
           }, 3000)
         }
 
-        alert(`✓ FOUND\n\nName: ${registration.name}\nMobile: ${registration.mobile_number}\nPayment: ${registration.payment_status}\nAmount: ₹${registration.amount}\n\nTime: ${timestamp}\n\n✅ Attendance recorded!`)
+        // Show colorful success modal
+        setScanResult({
+          success: true,
+          name: registration.name,
+          mobile: registration.mobile_number,
+          payment: registration.payment_status,
+          amount: registration.amount,
+          time: timestamp,
+          ticket: scannedTicket.trim()
+        })
+        setShowScanResult(true)
+
+        // Auto-dismiss after 4 seconds
+        setTimeout(() => {
+          setShowScanResult(false)
+          setScanResult(null)
+        }, 4000)
       } else {
         // Log failed scan
         try {
@@ -215,7 +243,19 @@ export default function AdminDashboard() {
           console.log('Logging error:', error)
         }
 
-        alert(`✗ TICKET NOT FOUND\n\nTicket: ${scannedTicket}\nTime: ${timestamp}\n\n⚠️ Scan logged as failed`)
+        // Show colorful failure modal
+        setScanResult({
+          success: false,
+          time: timestamp,
+          ticket: scannedTicket.trim()
+        })
+        setShowScanResult(true)
+
+        // Auto-dismiss after 4 seconds
+        setTimeout(() => {
+          setShowScanResult(false)
+          setScanResult(null)
+        }, 4000)
       }
 
       setScannedTicket('')
@@ -522,6 +562,310 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Scan Result Modal */}
+      {showScanResult && scanResult && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          padding: '20px',
+          animation: 'fadeIn 0.2s ease-in',
+        }}
+        onClick={() => {
+          setShowScanResult(false)
+          setScanResult(null)
+        }}
+        >
+          <div style={{
+            background: scanResult.success
+              ? 'linear-gradient(135deg, #28a745 0%, #20c997 100%)'
+              : 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)',
+            borderRadius: '20px',
+            padding: '40px',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            position: 'relative',
+            animation: scanResult.success ? 'bounceIn 0.5s ease-out' : 'shakeIn 0.5s ease-out',
+            color: 'white',
+          }}
+          onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowScanResult(false)
+                setScanResult(null)
+              }}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '35px',
+                height: '35px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                color: 'white',
+                transition: 'background 0.2s ease',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+            >
+              ×
+            </button>
+
+            {/* Icon */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginBottom: '25px',
+            }}>
+              {scanResult.success ? (
+                <div style={{
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                }}>
+                  <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+              ) : (
+                <div style={{
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                }}>
+                  <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* Title */}
+            <h2 style={{
+              fontSize: '2rem',
+              fontWeight: '800',
+              textAlign: 'center',
+              marginBottom: '15px',
+              fontFamily: "'Inter', sans-serif",
+              textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+            }}>
+              {scanResult.success ? '✓ TICKET FOUND!' : '✗ TICKET NOT FOUND'}
+            </h2>
+
+            {/* Details */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '12px',
+              padding: '25px',
+              marginBottom: '20px',
+              backdropFilter: 'blur(10px)',
+            }}>
+              {scanResult.success ? (
+                <>
+                  <div style={{ marginBottom: '15px' }}>
+                    <p style={{
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      marginBottom: '5px',
+                      opacity: 0.9,
+                      fontFamily: "'Inter', sans-serif",
+                    }}>NAME</p>
+                    <p style={{
+                      fontSize: '1.3rem',
+                      fontWeight: '700',
+                      margin: 0,
+                      fontFamily: "'Inter', sans-serif",
+                    }}>{scanResult.name}</p>
+                  </div>
+
+                  <div style={{ marginBottom: '15px' }}>
+                    <p style={{
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      marginBottom: '5px',
+                      opacity: 0.9,
+                      fontFamily: "'Inter', sans-serif",
+                    }}>MOBILE</p>
+                    <p style={{
+                      fontSize: '1.3rem',
+                      fontWeight: '700',
+                      margin: 0,
+                      fontFamily: "'Inter', sans-serif",
+                    }}>{scanResult.mobile}</p>
+                  </div>
+
+                  <div style={{ marginBottom: '15px', display: 'flex', gap: '15px' }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        marginBottom: '5px',
+                        opacity: 0.9,
+                        fontFamily: "'Inter', sans-serif",
+                      }}>PAYMENT</p>
+                      <p style={{
+                        fontSize: '1.1rem',
+                        fontWeight: '700',
+                        margin: 0,
+                        fontFamily: "'Inter', sans-serif",
+                      }}>{scanResult.payment}</p>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        marginBottom: '5px',
+                        opacity: 0.9,
+                        fontFamily: "'Inter', sans-serif",
+                      }}>AMOUNT</p>
+                      <p style={{
+                        fontSize: '1.1rem',
+                        fontWeight: '700',
+                        margin: 0,
+                        fontFamily: "'Inter', sans-serif",
+                      }}>₹{scanResult.amount}</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ marginBottom: '15px' }}>
+                  <p style={{
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    marginBottom: '5px',
+                    opacity: 0.9,
+                    fontFamily: "'Inter', sans-serif",
+                  }}>TICKET NUMBER</p>
+                  <p style={{
+                    fontSize: '1.3rem',
+                    fontWeight: '700',
+                    margin: 0,
+                    fontFamily: "'Inter', sans-serif",
+                  }}>{scanResult.ticket}</p>
+                </div>
+              )}
+
+              <div>
+                <p style={{
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  marginBottom: '5px',
+                  opacity: 0.9,
+                  fontFamily: "'Inter', sans-serif",
+                }}>SCANNED AT</p>
+                <p style={{
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  margin: 0,
+                  fontFamily: "'Inter', sans-serif",
+                }}>{scanResult.time}</p>
+              </div>
+            </div>
+
+            {/* Status Message */}
+            <div style={{
+              textAlign: 'center',
+              background: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '8px',
+              padding: '12px',
+            }}>
+              <p style={{
+                fontSize: '1.1rem',
+                fontWeight: '700',
+                margin: 0,
+                fontFamily: "'Inter', sans-serif",
+              }}>
+                {scanResult.success ? '✅ Attendance Recorded!' : '⚠️ Scan Logged as Failed'}
+              </p>
+            </div>
+          </div>
+
+          {/* Animations */}
+          <style jsx>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+
+            @keyframes bounceIn {
+              0% {
+                transform: scale(0.3);
+                opacity: 0;
+              }
+              50% {
+                transform: scale(1.05);
+              }
+              70% {
+                transform: scale(0.9);
+              }
+              100% {
+                transform: scale(1);
+                opacity: 1;
+              }
+            }
+
+            @keyframes shakeIn {
+              0% {
+                transform: translateX(0) scale(0.3);
+                opacity: 0;
+              }
+              25% {
+                transform: translateX(-10px) scale(0.7);
+              }
+              50% {
+                transform: translateX(10px) scale(0.9);
+              }
+              75% {
+                transform: translateX(-5px) scale(1.05);
+              }
+              100% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+              }
+            }
+
+            @keyframes pulse {
+              0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+              }
+              50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+              }
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* QR Scanner Modal */}
       {showScanner && (
