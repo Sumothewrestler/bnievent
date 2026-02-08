@@ -616,7 +616,7 @@ export default function AdminDashboard() {
               ×
             </button>
 
-            {/* Icon */}
+            {/* Icon/GIF */}
             <div style={{
               display: 'flex',
               justifyContent: 'center',
@@ -624,18 +624,26 @@ export default function AdminDashboard() {
             }}>
               {scanResult.success ? (
                 <div style={{
-                  width: '90px',
-                  height: '90px',
+                  width: '120px',
+                  height: '120px',
                   borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.3)',
+                  background: 'rgba(255, 255, 255, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  padding: '10px',
                   animation: 'pulse 1.5s ease-in-out infinite',
                 }}>
-                  <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
+                  <img
+                    src="/ez.gif"
+                    alt="Success"
+                    style={{
+                      width: '100px',
+                      height: '100px',
+                      objectFit: 'contain',
+                      filter: 'brightness(0) invert(1)',
+                    }}
+                  />
                 </div>
               ) : (
                 <div style={{
@@ -832,7 +840,7 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          {/* Animations */}
+          {/* Animations and Mobile Styles */}
           <style jsx>{`
             @keyframes fadeIn {
               from { opacity: 0; }
@@ -884,6 +892,85 @@ export default function AdminDashboard() {
               50% {
                 transform: scale(1.1);
                 opacity: 0.8;
+              }
+            }
+
+            /* Mobile Responsive Styles */
+            @media (max-width: 600px) {
+              div[style*="maxWidth: 500px"] {
+                margin: 10px !important;
+                padding: 25px !important;
+                border-radius: 16px !important;
+              }
+
+              h2 {
+                font-size: 1.5rem !important;
+              }
+
+              div[style*="fontSize: 1.3rem"] p,
+              p[style*="fontSize: 1.3rem"] {
+                font-size: 1.1rem !important;
+              }
+
+              div[style*="fontSize: 1.1rem"] p,
+              p[style*="fontSize: 1.1rem"] {
+                font-size: 0.95rem !important;
+              }
+
+              div[style*="fontSize: 1rem"] p,
+              p[style*="fontSize: 1rem"] {
+                font-size: 0.9rem !important;
+              }
+
+              div[style*="fontSize: 0.85rem"] p,
+              p[style*="fontSize: 0.85rem"] {
+                font-size: 0.75rem !important;
+              }
+
+              button[style*="fontSize: 1.2rem"] {
+                font-size: 1rem !important;
+                padding: 14px !important;
+              }
+
+              div[style*="width: 120px"] {
+                width: 90px !important;
+                height: 90px !important;
+              }
+
+              div[style*="width: 120px"] img {
+                width: 70px !important;
+                height: 70px !important;
+              }
+
+              div[style*="padding: 40px"] {
+                padding: 25px !important;
+              }
+
+              div[style*="padding: 25px"][style*="borderRadius"] {
+                padding: 18px !important;
+              }
+
+              div[style*="marginBottom: 25px"] {
+                margin-bottom: 18px !important;
+              }
+
+              div[style*="gap: 15px"] {
+                gap: 10px !important;
+              }
+            }
+
+            /* Extra small devices */
+            @media (max-width: 400px) {
+              h2 {
+                font-size: 1.3rem !important;
+              }
+
+              div[style*="maxWidth: 500px"] {
+                padding: 20px !important;
+              }
+
+              button {
+                padding: 12px !important;
               }
             }
           `}</style>
