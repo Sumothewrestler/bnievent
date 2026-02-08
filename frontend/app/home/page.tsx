@@ -163,27 +163,14 @@ export default function HomePage() {
 
         .tickets-text {
           text-align: center;
-          margin: 0;
+          margin: 0 0 40px 0;
           font-size: 2.5rem;
-          font-weight: 900;
-          background: linear-gradient(135deg, #ff0000, #ff6600, #ff3300);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          text-transform: uppercase;
-          letter-spacing: 3px;
-          font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
-          animation: titleGlow 2s ease-in-out infinite alternate;
+          font-weight: 800;
+          color: #0066cc;
+          letter-spacing: 2px;
+          font-family: 'Inter', 'Arial', 'Helvetica Neue', sans-serif;
           white-space: nowrap;
-        }
-
-        @keyframes titleGlow {
-          from {
-            filter: drop-shadow(0 0 8px rgba(255, 102, 0, 0.6));
-          }
-          to {
-            filter: drop-shadow(0 0 20px rgba(255, 102, 0, 0.9));
-          }
+          text-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
         }
 
         .gif-image {
