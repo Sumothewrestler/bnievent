@@ -278,7 +278,7 @@ export default function RegistrationForm() {
       {/* Header Bar with Logo */}
       <div className="header-bar">
         <div className="header-content">
-          <a href="https://dev.bnievent.rfidpro.in/home" className="header-logo-link">
+          <a href="https://bnichettinad.cloud/home" className="header-logo-link">
             <img
               src="/ez.gif"
               alt="BNI Event"
@@ -305,6 +305,84 @@ export default function RegistrationForm() {
               className={`carousel-image ${index === currentSlide ? 'active' : ''}`}
             />
           ))}
+        </div>
+      </div>
+
+      {/* Event Details & Pricing Section */}
+      <div style={{
+        background: '#ffffff',
+        padding: '25px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+        border: '1px solid #e0e0e0',
+        marginBottom: '20px'
+      }}>
+        <h2 style={{ textAlign: 'center', color: '#ff6600', fontSize: '1.5rem', marginBottom: '20px', fontWeight: 700 }}>
+          Event Information & Pricing
+        </h2>
+
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ fontSize: '15px', marginBottom: '10px' }}>
+            <strong>Event:</strong> BNI Chettinad
+          </p>
+          <p style={{ fontSize: '15px', marginBottom: '10px' }}>
+            <strong>Date:</strong> 21st February 2026 (Saturday)
+          </p>
+          <p style={{ fontSize: '15px', marginBottom: '10px' }}>
+            <strong>Time:</strong> 3:30 PM
+          </p>
+          <p style={{ fontSize: '15px', marginBottom: '10px' }}>
+            <strong>Venue:</strong> L.C.T.L Palaniappa Chettiar Memorial Auditorium, Karaikudi
+          </p>
+        </div>
+
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          padding: '20px',
+          borderRadius: '8px',
+          border: '2px solid #ff6600'
+        }}>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '15px', color: '#333', fontWeight: 600 }}>
+            Registration Fees (INR)
+          </h3>
+          <div style={{ display: 'grid', gap: '12px' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '10px',
+              background: '#ffffff',
+              borderRadius: '4px',
+              border: '1px solid #dee2e6'
+            }}>
+              <span style={{ fontSize: '14px' }}>BNI Members (Thalaivas/Chettinad/Madurai)</span>
+              <span style={{ fontWeight: 'bold', color: '#28a745' }}>₹ 300</span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '10px',
+              background: '#ffffff',
+              borderRadius: '4px',
+              border: '1px solid #dee2e6'
+            }}>
+              <span style={{ fontSize: '14px' }}>Public</span>
+              <span style={{ fontWeight: 'bold', color: '#28a745' }}>₹ 500</span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '10px',
+              background: '#ffffff',
+              borderRadius: '4px',
+              border: '1px solid #dee2e6'
+            }}>
+              <span style={{ fontSize: '14px' }}>Students</span>
+              <span style={{ fontWeight: 'bold', color: '#28a745' }}>₹ 600</span>
+            </div>
+          </div>
+          <p style={{ fontSize: '13px', color: '#666', marginTop: '15px', marginBottom: '0' }}>
+            * All prices are in Indian Rupees (INR). Registration fee is non-refundable.
+          </p>
         </div>
       </div>
 
