@@ -497,20 +497,20 @@ export default function AdminDashboard() {
           justifyContent: 'center',
           zIndex: 1000,
           padding: '20px',
-          overflowY: 'auto',
         }}
         onClick={handleCloseScannerModal}
         >
           <div style={{
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             borderRadius: '16px',
-            padding: '30px',
-            maxWidth: '550px',
+            padding: '24px',
+            maxWidth: '500px',
             width: '100%',
-            maxHeight: '90vh',
+            maxHeight: '85vh',
             overflowY: 'auto',
             boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
             border: '2px solid #ff6600',
+            position: 'relative',
           }}
           onClick={(e) => e.stopPropagation()}
           >
@@ -519,10 +519,10 @@ export default function AdminDashboard() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: '10px',
-              gap: '12px',
+              marginBottom: '8px',
+              gap: '10px',
             }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff6600" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ff6600" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="9" y1="9" x2="9" y2="9"></line>
                 <line x1="15" y1="9" x2="15" y2="9"></line>
@@ -530,7 +530,7 @@ export default function AdminDashboard() {
                 <line x1="15" y1="15" x2="15" y2="15"></line>
               </svg>
               <h3 style={{
-                fontSize: '1.75rem',
+                fontSize: '1.5rem',
                 fontWeight: '700',
                 margin: 0,
                 color: '#333',
@@ -542,18 +542,18 @@ export default function AdminDashboard() {
             </div>
 
             <p style={{
-              fontSize: '0.95rem',
-              color: '#555',
-              marginBottom: '25px',
+              fontSize: '0.875rem',
+              color: '#666',
+              marginBottom: '20px',
               textAlign: 'center',
               fontFamily: "'Inter', sans-serif",
-              lineHeight: '1.5',
+              lineHeight: '1.4',
             }}>
               Use your camera to scan QR code or enter ticket number manually
             </p>
 
             {/* Camera Toggle Button */}
-            <div style={{ marginBottom: '25px', textAlign: 'center' }}>
+            <div style={{ marginBottom: '18px', textAlign: 'center' }}>
               <button
                 onClick={() => {
                   if (cameraMode && scannerRef.current) {
@@ -571,32 +571,32 @@ export default function AdminDashboard() {
                   }
                 }}
                 style={{
-                  padding: '14px 28px',
+                  padding: '12px 24px',
                   backgroundColor: cameraMode ? '#dc3545' : '#ff6600',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '15px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
                   fontWeight: '600',
                   fontFamily: "'Inter', sans-serif",
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '8px',
                   margin: '0 auto',
                   transition: 'all 0.2s ease',
-                  boxShadow: cameraMode ? '0 4px 12px rgba(220, 53, 69, 0.3)' : '0 4px 12px rgba(255, 102, 0, 0.3)',
+                  boxShadow: cameraMode ? '0 3px 10px rgba(220, 53, 69, 0.3)' : '0 3px 10px rgba(255, 102, 0, 0.3)',
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = cameraMode ? '0 6px 16px rgba(220, 53, 69, 0.4)' : '0 6px 16px rgba(255, 102, 0, 0.4)'
+                  e.currentTarget.style.boxShadow = cameraMode ? '0 5px 14px rgba(220, 53, 69, 0.4)' : '0 5px 14px rgba(255, 102, 0, 0.4)'
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = cameraMode ? '0 4px 12px rgba(220, 53, 69, 0.3)' : '0 4px 12px rgba(255, 102, 0, 0.3)'
+                  e.currentTarget.style.boxShadow = cameraMode ? '0 3px 10px rgba(220, 53, 69, 0.3)' : '0 3px 10px rgba(255, 102, 0, 0.3)'
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                   <circle cx="12" cy="13" r="4"></circle>
                 </svg>
@@ -607,11 +607,11 @@ export default function AdminDashboard() {
             {/* QR Code Reader */}
             {cameraMode && (
               <div style={{
-                marginBottom: '25px',
-                borderRadius: '12px',
+                marginBottom: '18px',
+                borderRadius: '10px',
                 overflow: 'hidden',
-                border: '3px solid #ff6600',
-                boxShadow: '0 4px 16px rgba(255, 102, 0, 0.2)',
+                border: '2px solid #ff6600',
+                boxShadow: '0 3px 12px rgba(255, 102, 0, 0.2)',
               }}>
                 <div id="qr-reader" style={{ width: '100%' }}></div>
               </div>
@@ -620,17 +620,17 @@ export default function AdminDashboard() {
             {/* Manual Entry */}
             <div style={{
               background: '#ffffff',
-              borderRadius: '12px',
-              padding: '20px',
-              marginBottom: '25px',
+              borderRadius: '10px',
+              padding: '18px',
+              marginBottom: '18px',
               border: '1px solid #e0e0e0',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
             }}>
               <label style={{
                 display: 'block',
-                fontSize: '0.9rem',
+                fontSize: '0.85rem',
                 fontWeight: '600',
-                color: '#555',
+                color: '#666',
                 marginBottom: '10px',
                 fontFamily: "'Inter', sans-serif",
               }}>
@@ -645,16 +645,17 @@ export default function AdminDashboard() {
                 autoFocus={!cameraMode}
                 style={{
                   width: '100%',
-                  padding: '16px',
+                  padding: '14px',
                   border: '2px solid #d0d0d0',
-                  borderRadius: '10px',
-                  fontSize: '16px',
+                  borderRadius: '8px',
+                  fontSize: '15px',
                   fontFamily: "'Inter', sans-serif",
                   textAlign: 'center',
                   fontWeight: '600',
-                  letterSpacing: '1.5px',
+                  letterSpacing: '1.2px',
                   transition: 'border-color 0.2s ease',
                   outline: 'none',
+                  boxSizing: 'border-box',
                 }}
                 onFocus={(e) => e.target.style.borderColor = '#ff6600'}
                 onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
@@ -663,37 +664,35 @@ export default function AdminDashboard() {
 
             <div style={{
               display: 'flex',
-              gap: '12px',
-              flexWrap: 'wrap',
+              gap: '10px',
             }}>
               <button
                 onClick={handleScanTicket}
                 disabled={!scannedTicket}
                 style={{
                   flex: 1,
-                  minWidth: '140px',
-                  padding: '16px',
+                  padding: '14px 16px',
                   backgroundColor: scannedTicket ? '#28a745' : '#e0e0e0',
                   color: scannedTicket ? '#ffffff' : '#999',
                   border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '16px',
-                  fontWeight: '700',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '600',
                   fontFamily: "'Inter', sans-serif",
                   cursor: scannedTicket ? 'pointer' : 'not-allowed',
                   transition: 'all 0.2s ease',
-                  boxShadow: scannedTicket ? '0 4px 12px rgba(40, 167, 69, 0.3)' : 'none',
+                  boxShadow: scannedTicket ? '0 3px 10px rgba(40, 167, 69, 0.3)' : 'none',
                 }}
                 onMouseOver={(e) => {
                   if (scannedTicket) {
                     e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(40, 167, 69, 0.4)'
+                    e.currentTarget.style.boxShadow = '0 5px 14px rgba(40, 167, 69, 0.4)'
                   }
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
                   if (scannedTicket) {
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)'
+                    e.currentTarget.style.boxShadow = '0 3px 10px rgba(40, 167, 69, 0.3)'
                   }
                 }}
               >
@@ -703,14 +702,13 @@ export default function AdminDashboard() {
                 onClick={handleCloseScannerModal}
                 style={{
                   flex: 1,
-                  minWidth: '140px',
-                  padding: '16px',
+                  padding: '14px 16px',
                   backgroundColor: '#6c757d',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '16px',
-                  fontWeight: '700',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '600',
                   fontFamily: "'Inter', sans-serif",
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
@@ -732,18 +730,23 @@ export default function AdminDashboard() {
           {/* Mobile Responsive CSS */}
           <style jsx>{`
             @media (max-width: 600px) {
-              div[style*="padding: 30px"] {
+              div[style*="maxWidth: 500px"] {
                 padding: 20px !important;
+                maxHeight: 90vh !important;
               }
               h3 {
-                font-size: 1.4rem !important;
+                font-size: 1.3rem !important;
               }
               p {
-                font-size: 0.9rem !important;
+                font-size: 0.8rem !important;
               }
               button {
+                font-size: 13px !important;
+                padding: 12px !important;
+              }
+              input {
                 font-size: 14px !important;
-                padding: 14px !important;
+                padding: 12px !important;
               }
             }
           `}</style>
