@@ -117,7 +117,9 @@ export default function HomePage() {
         style={{ display: 'block', width: '100%', height: '100%' }}
       />
       <div className="content-container">
-        <h1 className="tickets-text">Click To Book</h1>
+        <a href="https://bnichettinad.cloud/" className="book-button">
+          Book Tickets
+        </a>
         <a href="https://bnichettinad.cloud/" className="gif-container">
           <img
             src="/ez.gif"
@@ -161,16 +163,33 @@ export default function HomePage() {
           transform: scale(1.05);
         }
 
-        .tickets-text {
-          text-align: center;
-          margin: 0 0 40px 0;
-          font-size: 2.5rem;
-          font-weight: 800;
-          color: #0066cc;
-          letter-spacing: 2px;
+        .book-button {
+          display: inline-block;
+          padding: 20px 50px;
+          margin-bottom: 40px;
+          background: #0066cc;
+          color: #ffffff;
+          font-size: 1.8rem;
+          font-weight: 700;
+          letter-spacing: 1px;
           font-family: 'Inter', 'Arial', 'Helvetica Neue', sans-serif;
-          white-space: nowrap;
-          text-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+          text-decoration: none;
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(0, 102, 204, 0.4);
+          transition: all 0.3s ease;
+          cursor: pointer;
+          border: none;
+        }
+
+        .book-button:hover {
+          background: #0052a3;
+          transform: translateY(-3px);
+          box-shadow: 0 12px 32px rgba(0, 102, 204, 0.5);
+        }
+
+        .book-button:active {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
         }
 
         .gif-image {
@@ -209,17 +228,17 @@ export default function HomePage() {
             max-width: 350px;
           }
 
+          .book-button {
+            font-size: 1.5rem;
+            padding: 18px 40px;
+          }
+
           .gif-container {
             padding: 6px;
           }
 
           .gif-image {
             max-width: 250px;
-          }
-
-          .tickets-text {
-            font-size: 2rem;
-            letter-spacing: 2px;
           }
         }
 
@@ -230,6 +249,11 @@ export default function HomePage() {
             padding: 0 15px;
           }
 
+          .book-button {
+            font-size: 1.3rem;
+            padding: 16px 35px;
+          }
+
           .gif-container {
             padding: 5px;
           }
@@ -237,17 +261,12 @@ export default function HomePage() {
           .gif-image {
             max-width: 200px;
           }
-
-          .tickets-text {
-            font-size: 1.5rem;
-            letter-spacing: 1.5px;
-          }
         }
 
         @media (max-width: 380px) {
-          .tickets-text {
-            font-size: 1.2rem;
-            letter-spacing: 1px;
+          .book-button {
+            font-size: 1.1rem;
+            padding: 14px 30px;
           }
         }
       `}</style>
