@@ -70,3 +70,25 @@ class Registration(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class ScanLog(models.Model):
+    """Track all QR code scans and check-ins"""
+    ACTION_CHOICES = [
+        ('SCAN_SUCCESS', 'Scan Success'),
+        ('SCAN_FAILED', 'Scan Failed'),
+        ('CHECK_IN', 'Check In'),
+    ]
+
+    registration = models.ForeignKey(Registration, on_delete=models.CASCADE, null=True, blank=True, related_name='scan_logs')
+    ticket_no = models.CharField(max_length=20)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES, default='SCAN_SUCCESS')
+    scanned_at = models.DateTimeField(auto_now_add=True)
+    scanned_by = models.CharField(max_length=100, blank=True, null=True)  # Admin username
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-scanned_at']
+
+    def __str__(self):
+        return f"{self.ticket_no} - {self.action} at {self.scanned_at}"

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Registration, EventSettings
+from .models import Registration, EventSettings, ScanLog
 
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -29,3 +29,19 @@ class EventSettingsSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.logo.url)
         return None
+
+
+class ScanLogSerializer(serializers.ModelSerializer):
+    registration_name = serializers.CharField(source='registration.name', read_only=True)
+    registration_mobile = serializers.CharField(source='registration.mobile_number', read_only=True)
+    registration_email = serializers.CharField(source='registration.email', read_only=True)
+    payment_status = serializers.CharField(source='registration.payment_status', read_only=True)
+
+    class Meta:
+        model = ScanLog
+        fields = [
+            'id', 'registration', 'ticket_no', 'action', 'scanned_at',
+            'scanned_by', 'notes', 'registration_name', 'registration_mobile',
+            'registration_email', 'payment_status'
+        ]
+        read_only_fields = ['scanned_at']

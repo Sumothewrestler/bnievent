@@ -1,10 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import RegistrationViewSet, EventSettingsViewSet
+from .views import RegistrationViewSet, EventSettingsViewSet, ScanLogViewSet
 from .payment_views import create_payment_order, verify_payment, payment_webhook
 
 router = DefaultRouter()
 router.register(r'registrations', RegistrationViewSet)
+router.register(r'scan-logs', ScanLogViewSet, basename='scan-logs')
 router.register(r'settings', EventSettingsViewSet, basename='settings')
 
 urlpatterns = [
