@@ -116,35 +116,23 @@ export default function HomePage() {
         ref={canvasRef}
         style={{ display: 'block', width: '100%', height: '100%' }}
       />
-      <div className="content-wrapper">
-        <div className="content-container">
-          <a href="https://bnichettinad.cloud/" className="gif-container">
-            <img
-              src="/ez.gif"
-              alt="BNI Animation"
-              className="gif-image"
-            />
-          </a>
-          <h1 className="tickets-text">CLICK TO BOOK NOW</h1>
-        </div>
+      <div className="content-container">
+        <a href="https://bnichettinad.cloud/" className="gif-container">
+          <img
+            src="/ez.gif"
+            alt="BNI Animation"
+            className="gif-image"
+          />
+        </a>
+        <h1 className="tickets-text">CLICK TO BOOK NOW</h1>
       </div>
       <style jsx>{`
-        .content-wrapper {
+        .content-container {
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
           z-index: 10;
-          background: rgba(255, 255, 255, 0.85);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          border-radius: 24px;
-          padding: 50px 40px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .content-container {
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -152,6 +140,7 @@ export default function HomePage() {
           gap: 30px;
           width: 100%;
           max-width: 400px;
+          padding: 0 20px;
         }
 
         .gif-container {
@@ -176,13 +165,25 @@ export default function HomePage() {
           text-align: center;
           margin: 0;
           font-size: 2.5rem;
-          font-weight: 800;
-          color: #1a1a1a;
+          font-weight: 900;
+          background: linear-gradient(135deg, #ff0000, #ff6600, #ff3300);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
           text-transform: uppercase;
           letter-spacing: 3px;
-          font-family: 'Inter', 'Arial', 'Helvetica Neue', sans-serif;
+          font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
+          animation: titleGlow 2s ease-in-out infinite alternate;
           white-space: nowrap;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes titleGlow {
+          from {
+            filter: drop-shadow(0 0 8px rgba(255, 102, 0, 0.6));
+          }
+          to {
+            filter: drop-shadow(0 0 20px rgba(255, 102, 0, 0.9));
+          }
         }
 
         .gif-image {
@@ -216,10 +217,6 @@ export default function HomePage() {
         }
 
         @media (max-width: 768px) {
-          .content-wrapper {
-            padding: 40px 30px;
-          }
-
           .content-container {
             gap: 25px;
             max-width: 350px;
@@ -240,14 +237,10 @@ export default function HomePage() {
         }
 
         @media (max-width: 480px) {
-          .content-wrapper {
-            padding: 30px 20px;
-            border-radius: 20px;
-          }
-
           .content-container {
             gap: 20px;
             max-width: 300px;
+            padding: 0 15px;
           }
 
           .gif-container {
@@ -265,10 +258,6 @@ export default function HomePage() {
         }
 
         @media (max-width: 380px) {
-          .content-wrapper {
-            padding: 25px 15px;
-          }
-
           .tickets-text {
             font-size: 1.2rem;
             letter-spacing: 1px;
