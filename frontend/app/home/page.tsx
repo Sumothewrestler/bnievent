@@ -117,14 +117,14 @@ export default function HomePage() {
         style={{ display: 'block', width: '100%', height: '100%' }}
       />
       <div className="content-container">
-        <a href="https://dev.bnievent.rfidpro.in/" className="gif-container">
+        <a href="https://bnichettinad.cloud/" className="gif-container">
           <img
             src="/ez.gif"
             alt="BNI Animation"
             className="gif-image"
           />
         </a>
-        <h1 className="tickets-text">BOOK YOUR TICKETS</h1>
+        <h1 className="tickets-text">CLICK TO BOOK NOW</h1>
       </div>
       <style jsx>{`
         .content-container {
