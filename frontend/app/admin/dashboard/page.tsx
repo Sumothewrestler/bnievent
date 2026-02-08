@@ -152,22 +152,29 @@ export default function AdminDashboard() {
         timeStyle: 'medium'
       })
 
+      const token = localStorage.getItem('access_token')
+
       if (registration) {
-        // Log the scan event to backend
-        const token = localStorage.getItem('access_token')
+        // Log the successful scan to backend
         try {
-          await fetch(`https://api.bnievent.rfidpro.in/api/registrations/${registration.id}/log-scan/`, {
+          const response = await fetch(`https://api.bnievent.rfidpro.in/api/scan-logs/log_scan/`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              ticket_no: scannedTicket,
-              scanned_at: timestamp,
-              action: 'SCAN_SUCCESS'
+              ticket_no: scannedTicket.trim(),
+              action: 'CHECK_IN',
+              notes: `Check-in by ${localStorage.getItem('username') || 'admin'}`
             }),
-          }).catch((err) => console.log('Log error:', err))
+          })
+
+          if (response.ok) {
+            console.log('Scan logged successfully')
+          } else {
+            console.log('Failed to log scan:', await response.text())
+          }
         } catch (error) {
           console.log('Logging error:', error)
         }
@@ -182,29 +189,33 @@ export default function AdminDashboard() {
           }, 3000)
         }
 
-        alert(`✓ FOUND\n\nName: ${registration.name}\nMobile: ${registration.mobile_number}\nPayment: ${registration.payment_status}\nAmount: ₹${registration.amount}\n\nTime: ${timestamp}`)
+        alert(`✓ FOUND\n\nName: ${registration.name}\nMobile: ${registration.mobile_number}\nPayment: ${registration.payment_status}\nAmount: ₹${registration.amount}\n\nTime: ${timestamp}\n\n✅ Attendance recorded!`)
       } else {
         // Log failed scan
-        const token = localStorage.getItem('access_token')
         try {
-          await fetch(`https://api.bnievent.rfidpro.in/api/scan-logs/`, {
+          const response = await fetch(`https://api.bnievent.rfidpro.in/api/scan-logs/log_scan/`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              ticket_no: scannedTicket,
-              scanned_at: timestamp,
+              ticket_no: scannedTicket.trim(),
               action: 'SCAN_FAILED',
-              reason: 'Ticket not found'
+              notes: 'Ticket not found in database'
             }),
-          }).catch((err) => console.log('Log error:', err))
+          })
+
+          if (response.ok) {
+            console.log('Failed scan logged successfully')
+          } else {
+            console.log('Failed to log scan:', await response.text())
+          }
         } catch (error) {
           console.log('Logging error:', error)
         }
 
-        alert(`✗ TICKET NOT FOUND\n\nTicket: ${scannedTicket}\nTime: ${timestamp}`)
+        alert(`✗ TICKET NOT FOUND\n\nTicket: ${scannedTicket}\nTime: ${timestamp}\n\n⚠️ Scan logged as failed`)
       }
 
       setScannedTicket('')
