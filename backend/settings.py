@@ -49,9 +49,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -90,6 +90,10 @@ DATABASES = {
         'PASSWORD': 'BNIEvent@2026',
         'HOST': 'localhost',
         'PORT': '5432',
+        'CONN_MAX_AGE': 600,  # Keep connections alive for 10 minutes
+        'OPTIONS': {
+            'connect_timeout': 10,
+        },
     }
 }
 
@@ -150,6 +154,12 @@ REST_FRAMEWORK = {
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://bnichettinad.cloud",
+    "https://www.bnichettinad.cloud",
+    "https://event.bnichettinad.cloud",
+    "http://bnichettinad.cloud",
+    "http://www.bnichettinad.cloud",
+    "http://event.bnichettinad.cloud",
     "https://dev.bnievent.rfidpro.in",
     "http://dev.bnievent.rfidpro.in",
 ]
@@ -170,3 +180,12 @@ CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', '')
 CASHFREE_ENV = os.getenv('CASHFREE_ENV', 'TEST')  # 'TEST' for sandbox, 'PROD' for production
 CASHFREE_PAYMENT_AMOUNT = float(os.getenv('CASHFREE_PAYMENT_AMOUNT', '1.00'))  # Default payment amount in INR
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://dev.bnievent.rfidpro.in')  # Frontend URL for payment redirects
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'BNI Chettinad Event <noreply@bnievent.com>')

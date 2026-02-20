@@ -24,6 +24,8 @@ export default function ScanLogs() {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [actionFilter, setActionFilter] = useState('ALL')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -72,7 +74,27 @@ export default function ScanLogs() {
     }
   }
 
-  const filteredLogs = logs.filter(log => {
+  // Group logs by day and show only one entry per day
+  const groupLogsByDay = (logs: ScanLog[]) => {
+    const grouped = new Map<string, ScanLog>()
+
+    logs.forEach(log => {
+      const date = new Date(log.scanned_at).toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata'
+      })
+
+      // Keep only the latest log for each day
+      if (!grouped.has(date) || new Date(log.scanned_at) > new Date(grouped.get(date)!.scanned_at)) {
+        grouped.set(date, log)
+      }
+    })
+
+    return Array.from(grouped.values()).sort((a, b) =>
+      new Date(b.scanned_at).getTime() - new Date(a.scanned_at).getTime()
+    )
+  }
+
+  const filteredLogs = groupLogsByDay(logs.filter(log => {
     const matchesSearch = log.ticket_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (log.registration_name && log.registration_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (log.registration_mobile && log.registration_mobile.includes(searchTerm)) ||
@@ -81,18 +103,50 @@ export default function ScanLogs() {
     const matchesAction = actionFilter === 'ALL' || log.action === actionFilter
 
     return matchesSearch && matchesAction
-  })
+  }))
+
+  const handleDeleteAllLogs = async () => {
+    const token = localStorage.getItem('access_token')
+    if (!token) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch('https://api.bnievent.rfidpro.in/api/scan-logs/delete_all/', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        setLogs([])
+        setShowDeleteConfirm(false)
+        alert('All logs deleted successfully')
+      } else if (response.status === 401) {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        router.replace('/admin')
+      } else {
+        alert('Failed to delete logs')
+      }
+    } catch (error) {
+      alert('Error connecting to server')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const exportToCSV = () => {
-    const headers = ['Ticket No', 'Name', 'Mobile', 'Email', 'Payment Status', 'Action', 'Scanned At', 'Scanned By', 'Notes']
-    const csvData = filteredLogs.map(log => [
+    const headers = ['S.no', 'Timestamp', 'Ticket No', 'Name', 'Mobile', 'Email', 'Payment Status', 'Action', 'Scanned By', 'Notes']
+    const csvData = filteredLogs.map((log, index) => [
+      index + 1,
+      new Date(log.scanned_at).toLocaleString(),
       log.ticket_no,
       log.registration_name || 'N/A',
       log.registration_mobile || 'N/A',
       log.registration_email || 'N/A',
       log.payment_status || 'N/A',
       log.action,
-      new Date(log.scanned_at).toLocaleString(),
       log.scanned_by || 'N/A',
       log.notes || ''
     ])
@@ -289,6 +343,30 @@ export default function ScanLogs() {
           >
             Export to CSV
           </button>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={logs.length === 0}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: logs.length === 0 ? '#cccccc' : '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '600',
+              fontFamily: "'Inter', sans-serif",
+              cursor: logs.length === 0 ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s ease',
+            }}
+            onMouseOver={(e) => {
+              if (logs.length > 0) e.currentTarget.style.backgroundColor = '#c82333'
+            }}
+            onMouseOut={(e) => {
+              if (logs.length > 0) e.currentTarget.style.backgroundColor = '#dc3545'
+            }}
+          >
+            Delete All Logs
+          </button>
         </div>
 
         {/* Statistics */}
@@ -396,20 +474,29 @@ export default function ScanLogs() {
           }}>
             <thead>
               <tr style={{ backgroundColor: '#f8f9fa' }}>
+                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>S.no</th>
+                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Timestamp</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Ticket No</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Name</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Mobile</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Payment</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Action</th>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Scanned At</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Scanned By</th>
               </tr>
             </thead>
             <tbody>
-              {filteredLogs.map((log) => {
+              {filteredLogs.map((log, index) => {
                 const actionColor = getActionColor(log.action)
                 return (
                   <tr key={log.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                    <td style={{ padding: '12px', fontSize: '14px', color: '#666' }}>{index + 1}</td>
+                    <td style={{ padding: '12px', fontSize: '13px', color: '#666' }}>
+                      {new Date(log.scanned_at).toLocaleString('en-IN', {
+                        timeZone: 'Asia/Kolkata',
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
+                      })}
+                    </td>
                     <td style={{ padding: '12px', fontSize: '14px', fontWeight: '600', color: '#333' }}>{log.ticket_no}</td>
                     <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>{log.registration_name || 'N/A'}</td>
                     <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>{log.registration_mobile || 'N/A'}</td>
@@ -441,13 +528,6 @@ export default function ScanLogs() {
                         {log.action.replace('_', ' ')}
                       </span>
                     </td>
-                    <td style={{ padding: '12px', fontSize: '13px', color: '#666' }}>
-                      {new Date(log.scanned_at).toLocaleString('en-IN', {
-                        timeZone: 'Asia/Kolkata',
-                        dateStyle: 'medium',
-                        timeStyle: 'short'
-                      })}
-                    </td>
                     <td style={{ padding: '12px', fontSize: '14px', color: '#666' }}>{log.scanned_by || 'N/A'}</td>
                   </tr>
                 )
@@ -468,6 +548,109 @@ export default function ScanLogs() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px',
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            maxWidth: '450px',
+            width: '100%',
+            padding: '30px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+              <div style={{
+                fontSize: '48px',
+                marginBottom: '15px',
+              }}>
+                ⚠️
+              </div>
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                margin: '0 0 10px 0',
+                color: '#dc3545',
+              }}>
+                Delete All Logs?
+              </h2>
+              <p style={{
+                fontSize: '0.95rem',
+                color: '#666',
+                margin: 0,
+                lineHeight: '1.5',
+              }}>
+                This will permanently delete all {logs.length} scan logs from the database. This action cannot be undone.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  backgroundColor: '#6c757d',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  opacity: deleting ? 0.6 : 1,
+                  transition: 'background-color 0.2s ease',
+                }}
+                onMouseOver={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#5a6268'
+                }}
+                onMouseOut={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#6c757d'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAllLogs}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  backgroundColor: deleting ? '#cccccc' : '#dc3545',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.2s ease',
+                }}
+                onMouseOver={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#c82333'
+                }}
+                onMouseOut={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#dc3545'
+                }}
+              >
+                {deleting ? 'Deleting...' : 'Delete All'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -6,13 +6,17 @@ export default function TermsAndConditions() {
       <div style={{ lineHeight: '1.6', fontSize: '15px' }}>
         <section style={{ marginBottom: '25px' }}>
           <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>1. Event Registration</h2>
-          <p>By registering for the BNI Event, you agree to provide accurate and complete information. All registrations are subject to approval and availability.</p>
+          <p>By registering for the BNI Chettinad Event, you agree to provide accurate and complete information. All registrations are subject to approval and availability.</p>
+          <div style={{ backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '8px', marginTop: '10px' }}>
+            <p style={{ margin: 0 }}><strong>Event Date:</strong> 21st February 2026 (Sunday), 3:30 PM</p>
+            <p style={{ margin: 0 }}><strong>Venue:</strong> L.C.T.L Palaniappa Chettiar Memorial Auditorium, Karaikudi</p>
+          </div>
         </section>
 
         <section style={{ marginBottom: '25px' }}>
           <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>2. Payment Terms</h2>
           <p>All registration fees must be paid in full at the time of registration. We accept payments through our secure payment gateway powered by Cashfree.</p>
-          <p>Fees are listed in Indian Rupees (INR) only.</p>
+          <p>Fees are listed in Indian Rupees (INR) only and range from <strong>Rs. 300 to Rs. 600</strong> depending on participant category and eligibility.</p>
         </section>
 
         <section style={{ marginBottom: '25px' }}>
@@ -22,12 +26,18 @@ export default function TermsAndConditions() {
 
         <section style={{ marginBottom: '25px' }}>
           <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>4. Event Attendance</h2>
-          <p>Your registration ticket is valid only for the registered participant. Tickets are non-transferable unless explicitly stated otherwise.</p>
+          <p>Your registration ticket is valid only for the registered participant. Tickets are non-transferable and non-refundable.</p>
         </section>
 
         <section style={{ marginBottom: '25px' }}>
-          <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>5. Cancellation Policy</h2>
-          <p>Event cancellations or changes by the organizer will be communicated via email. Please refer to our Refund & Cancellation Policy for details on refunds.</p>
+          <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>5. No Refund Policy</h2>
+          <div style={{ backgroundColor: '#fff3cd', padding: '15px', borderRadius: '8px', border: '2px solid #ffc107', marginBottom: '10px' }}>
+            <p style={{ margin: 0, fontWeight: 'bold' }}>
+              All registrations are non-refundable and non-transferable. No refunds will be issued under any circumstances once payment is completed.
+            </p>
+          </div>
+          <p>By completing your registration, you acknowledge and agree to this no refund policy. Please ensure your availability before registering.</p>
+          <p>Event cancellations or changes by the organizer will be communicated via email and phone. In such cases, full refunds will be processed. Please refer to our Refund & Cancellation Policy for complete details.</p>
         </section>
 
         <section style={{ marginBottom: '25px' }}>
@@ -41,13 +51,36 @@ export default function TermsAndConditions() {
         </section>
 
         <section style={{ marginBottom: '25px' }}>
-          <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>8. Changes to Terms</h2>
-          <p>We reserve the right to modify these terms and conditions at any time. Any changes will be updated on this page.</p>
+          <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>8. Code of Conduct</h2>
+          <p>All participants are expected to maintain professional conduct during the event. The organizers reserve the right to refuse entry or remove any participant who violates the code of conduct.</p>
         </section>
 
         <section style={{ marginBottom: '25px' }}>
-          <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>9. Contact</h2>
-          <p>For any questions regarding these terms, please contact us at support@bnievent.com</p>
+          <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>9. Photography & Media</h2>
+          <p>By attending the event, you consent to being photographed or recorded. Event organizers may use these materials for promotional purposes.</p>
+        </section>
+
+        <section style={{ marginBottom: '25px' }}>
+          <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>10. Changes to Terms</h2>
+          <p>We reserve the right to modify these terms and conditions at any time. Any changes will be updated on this page and communicated to registered participants if necessary.</p>
+        </section>
+
+        <section style={{ marginBottom: '25px' }}>
+          <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>11. Contact</h2>
+          <p>For any questions regarding these terms or the event:</p>
+          <div style={{ backgroundColor: '#e7f3ff', padding: '15px', borderRadius: '8px', marginTop: '10px' }}>
+            <p style={{ marginBottom: '5px' }}><strong>Email:</strong> digitalflareup@gmail.com</p>
+            <p style={{ marginBottom: '5px' }}><strong>Phone:</strong> +91 94425 05671</p>
+            <p style={{ margin: 0 }}><strong>Response Time:</strong> Within 24-48 hours on business days</p>
+          </div>
+        </section>
+
+        <section style={{ marginBottom: '25px' }}>
+          <div style={{ backgroundColor: '#d1ecf1', padding: '15px', borderRadius: '8px', border: '1px solid #bee5eb' }}>
+            <p style={{ margin: 0 }}>
+              <strong>Agreement:</strong> By completing your registration and payment, you confirm that you have read, understood, and agree to these Terms & Conditions.
+            </p>
+          </div>
         </section>
       </div>
 

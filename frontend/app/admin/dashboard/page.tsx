@@ -12,6 +12,7 @@ interface Registration {
   age: number | null
   location: string | null
   company_name: string | null
+  referred_by: string | null
   registration_for: string | null
   payment_status: string
   payment_id: string | null
@@ -19,6 +20,13 @@ interface Registration {
   amount: string
   payment_date: string | null
   created_at: string
+  is_primary_booker: boolean
+  primary_booker_name: string | null
+  primary_booker_email: string | null
+  primary_booker_mobile: string | null
+  gateway_verified: boolean
+  message_copied: boolean
+  message_copied_at: string | null
 }
 
 // QR Code generation function
@@ -40,6 +48,18 @@ export default function AdminDashboard() {
   const [cameraMode, setCameraMode] = useState(false)
   const [scannerReady, setScannerReady] = useState(false)
   const scannerRef = useRef<any>(null)
+  const [sharedWhatsApp, setSharedWhatsApp] = useState<Set<number>>(new Set())
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingRegistration, setEditingRegistration] = useState<Registration | null>(null)
+  const [editForm, setEditForm] = useState<Partial<Registration>>({})
+
+  // Load shared WhatsApp status from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('whatsapp_shared')
+    if (stored) {
+      setSharedWhatsApp(new Set(JSON.parse(stored)))
+    }
+  }, [])
 
   // Scan result modal state
   const [showScanResult, setShowScanResult] = useState(false)
@@ -276,6 +296,52 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleEdit = (reg: Registration) => {
+    setEditingRegistration(reg)
+    setEditForm({
+      name: reg.name,
+      mobile_number: reg.mobile_number,
+      email: reg.email,
+      age: reg.age,
+      location: reg.location,
+      company_name: reg.company_name,
+      referred_by: reg.referred_by,
+      registration_for: reg.registration_for,
+      amount: reg.amount,
+      payment_status: reg.payment_status,
+    })
+    setShowEditModal(true)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingRegistration) return
+
+    const token = localStorage.getItem('access_token')
+    try {
+      const response = await fetch(`https://api.bnievent.rfidpro.in/api/registrations/${editingRegistration.id}/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editForm),
+      })
+
+      if (response.ok) {
+        const updatedReg = await response.json()
+        setRegistrations(registrations.map(r => r.id === editingRegistration.id ? updatedReg : r))
+        setShowEditModal(false)
+        setEditingRegistration(null)
+        setEditForm({})
+        alert('Registration updated successfully!')
+      } else {
+        alert('Failed to update registration')
+      }
+    } catch (error) {
+      alert('Error updating registration')
+    }
+  }
+
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this registration?')) {
       return
@@ -301,37 +367,128 @@ export default function AdminDashboard() {
   }
 
   const handleWhatsAppShare = async (reg: Registration) => {
-    const qrUrl = await generateQRCode(reg.ticket_no)
-    const message = `*BNI CHETTINAD Event Registration*\n\n` +
-      `Dear ${reg.name},\n\n` +
-      `Your registration is confirmed!\n\n` +
-      `*Ticket Number:* ${reg.ticket_no}\n` +
-      `*Payment Status:* ${reg.payment_status}\n` +
-      `*Amount:* ₹${reg.amount}\n\n` +
-      `*QR Code:* ${qrUrl}\n\n` +
-      `Please save this ticket for entry.\n\n` +
-      `Thank you for registering!`
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`https://api.bnievent.rfidpro.in/api/registrations/${reg.id}/save-id-card/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
 
-    const whatsappUrl = `https://web.whatsapp.com/send?phone=${reg.mobile_number}&text=${encodeURIComponent(message)}`
-    window.open(whatsappUrl, '_blank')
+      if (response.ok) {
+        const data = await response.json()
+        const message = `*BNI CHETTINAD - Event Registration Confirmation*\n\n` +
+          `Dear ${reg.name},\n\n` +
+          `Your registration has been successfully confirmed.\n\n` +
+          `*Ticket Number:* ${reg.ticket_no}\n` +
+          `*Payment Status:* ${reg.payment_status}\n` +
+          `*Amount:* ₹${reg.amount}\n\n` +
+          `*Your ID Card:*\n${data.image_url}\n\n` +
+          `📍 *Ticket Collection Details:*\n` +
+          `Please collect your event ticket on 20th February at the venue,\n` +
+          `⏰ between 10:30 AM and 7:30 PM.\n\n` +
+          `Kindly save this ID card and present it while collecting your ticket.\n\n` +
+          `Thank you for registering. We look forward to seeing you! 😊`
+
+        // Normalize phone number to Indian format (+91)
+        let phoneNumber = reg.mobile_number.replace(/\s+/g, '').replace(/^0+/, '')
+        // Remove any existing country code
+        phoneNumber = phoneNumber.replace(/^\+\d{1,3}/, '')
+        // Add +91 prefix
+        phoneNumber = `91${phoneNumber}`
+
+        const whatsappUrl = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
+        window.open(whatsappUrl, '_blank')
+
+        // Mark as shared and save to localStorage
+        const newShared = new Set(sharedWhatsApp)
+        newShared.add(reg.id)
+        setSharedWhatsApp(newShared)
+        localStorage.setItem('whatsapp_shared', JSON.stringify(Array.from(newShared)))
+      } else {
+        alert('Failed to generate ID card')
+      }
+    } catch (error) {
+      alert('Error generating ID card')
+    }
+  }
+
+  const handleCopyWhatsAppMessage = async (reg: Registration) => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`https://api.bnievent.rfidpro.in/api/registrations/${reg.id}/save-id-card/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const message = `*BNI CHETTINAD - Event Registration Confirmation*\n\n` +
+          `Dear ${reg.name},\n\n` +
+          `Your registration has been successfully confirmed.\n\n` +
+          `*Ticket Number:* ${reg.ticket_no}\n` +
+          `*Payment Status:* ${reg.payment_status}\n` +
+          `*Amount:* ₹${reg.amount}\n\n` +
+          `*Your ID Card:*\n${data.image_url}\n\n` +
+          `📍 *Ticket Collection Details:*\n` +
+          `Please collect your event ticket on 20th February at the venue,\n` +
+          `⏰ between 10:30 AM and 7:30 PM.\n\n` +
+          `Kindly save this ID card and present it while collecting your ticket.\n\n` +
+          `Thank you for registering. We look forward to seeing you! 😊`
+
+        // Copy to clipboard
+        await navigator.clipboard.writeText(message)
+
+        // Update the registration in state to reflect the copied status
+        setRegistrations(prevRegs =>
+          prevRegs.map(r =>
+            r.id === reg.id
+              ? { ...r, message_copied: true, message_copied_at: new Date().toISOString() }
+              : r
+          )
+        )
+
+        // Optional: Show a brief notification
+        alert('WhatsApp message copied to clipboard!')
+      }
+    } catch (error) {
+      alert('Error copying message')
+    }
   }
 
   const handleEmailShare = async (reg: Registration) => {
-    const qrUrl = await generateQRCode(reg.ticket_no)
-    const subject = `BNI CHETTINAD Event - Your Ticket (${reg.ticket_no})`
-    const body = `Dear ${reg.name},\n\n` +
-      `Your registration for BNI CHETTINAD Event is confirmed!\n\n` +
-      `Ticket Number: ${reg.ticket_no}\n` +
-      `Payment Status: ${reg.payment_status}\n` +
-      `Amount: ₹${reg.amount}\n\n` +
-      `Your QR Code: ${qrUrl}\n\n` +
-      `Please save this ticket for entry verification at the event.\n\n` +
-      `Thank you for registering!\n\n` +
-      `Best regards,\n` +
-      `BNI CHETTINAD Team`
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`https://api.bnievent.rfidpro.in/api/registrations/${reg.id}/save-id-card/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
 
-    const mailtoUrl = `mailto:${reg.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-    window.location.href = mailtoUrl
+      let idCardUrl = ''
+      if (response.ok) {
+        const data = await response.json()
+        idCardUrl = data.image_url
+      }
+
+      const subject = `BNI CHETTINAD Event - Your Ticket (${reg.ticket_no})`
+      const body = `Dear ${reg.name},\n\n` +
+        `Your registration for BNI CHETTINAD Event is confirmed!\n\n` +
+        `Ticket Number: ${reg.ticket_no}\n` +
+        `Payment Status: ${reg.payment_status}\n` +
+        `Amount: ₹${reg.amount}\n\n` +
+        (idCardUrl ? `Your ID Card: ${idCardUrl}\n\n` : '') +
+        `Please save this ID card for entry verification at the event.\n\n` +
+        `Thank you for registering!\n\n` +
+        `Best regards,\n` +
+        `BNI CHETTINAD Team`
+
+      const mailtoUrl = `mailto:${reg.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+      window.location.href = mailtoUrl
+    } catch (error) {
+      alert('Error generating ID card for email')
+    }
   }
 
   const getPaymentStatusColor = (status: string) => {
@@ -348,10 +505,10 @@ export default function AdminDashboard() {
   }
 
   const filteredRegistrations = registrations.filter(reg => {
-    const matchesSearch = reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.ticket_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.mobile_number.includes(searchTerm)
+    const matchesSearch = (reg.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (reg.ticket_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (reg.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (reg.mobile_number || '').includes(searchTerm)
 
     const matchesPayment = paymentFilter === 'ALL' || reg.payment_status === paymentFilter
 
@@ -359,7 +516,7 @@ export default function AdminDashboard() {
   })
 
   const exportToCSV = () => {
-    const headers = ['Ticket No', 'Name', 'Mobile', 'Email', 'Age', 'Location', 'Company', 'Registration For', 'Payment Status', 'Amount', 'Payment ID', 'Order ID', 'Payment Date', 'Created At']
+    const headers = ['Ticket No', 'Name', 'Mobile', 'Email', 'Age', 'Location', 'Company', 'Registration For', 'Referred By', 'Registered By', 'Payment Status', 'Amount', 'Payment ID', 'Order ID', 'Payment Date', 'Created At']
     const csvData = filteredRegistrations.map(reg => [
       reg.ticket_no,
       reg.name,
@@ -369,6 +526,8 @@ export default function AdminDashboard() {
       reg.location || '',
       reg.company_name || '',
       reg.registration_for || '',
+      reg.referred_by ? reg.referred_by.replace(/_/g, ' ') : '',
+      reg.is_primary_booker ? 'Self' : (reg.primary_booker_name || ''),
       reg.payment_status,
       reg.amount,
       reg.payment_id || '',
@@ -389,6 +548,7 @@ export default function AdminDashboard() {
     a.download = `bni_registrations_${new Date().toISOString().split('T')[0]}.csv`
     a.click()
   }
+
 
   if (!isReady || loading) {
     return (
@@ -469,12 +629,12 @@ export default function AdminDashboard() {
               <span style={{ color: '#000000' }}>CHETTINAD</span>
             </h1>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button
-              onClick={() => setShowScanner(!showScanner)}
+              onClick={() => router.push('/admin/seats')}
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#0066cc',
+                backgroundColor: '#6f42c1',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '6px',
@@ -487,17 +647,14 @@ export default function AdminDashboard() {
                 alignItems: 'center',
                 gap: '8px',
               }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0052a3'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0066cc'}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#5a32a3'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6f42c1'}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="9" y1="9" x2="9" y2="9"></line>
-                <line x1="15" y1="9" x2="15" y2="9"></line>
-                <line x1="9" y1="15" x2="9" y2="15"></line>
-                <line x1="15" y1="15" x2="15" y2="15"></line>
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
-              Scan QR
+              Seats
             </button>
             <button
               onClick={() => router.push('/admin/logs')}
@@ -529,7 +686,33 @@ export default function AdminDashboard() {
               View Logs
             </button>
             <button
-              onClick={handleLogout}
+              onClick={() => router.push('/admin/idcard')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#17a2b8',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#138496'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#17a2b8'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+              ID Card
+            </button>
+            <button
+              onClick={() => router.push('/admin/sponsors')}
               style={{
                 padding: '12px 24px',
                 backgroundColor: '#ff6600',
@@ -541,9 +724,221 @@ export default function AdminDashboard() {
                 fontFamily: "'Inter', sans-serif",
                 cursor: 'pointer',
                 transition: 'background-color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e55a00'}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e55b00'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ff6600'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              Sponsors
+            </button>
+            <button
+              onClick={() => router.push('/admin/payment-report')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#28a745',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+              Payment Report
+            </button>
+            <button
+              onClick={() => router.push('/admin/bni-bookings')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#9c27b0',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#7b1fa2'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#9c27b0'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              BNI Bookings
+            </button>
+            <button
+              onClick={() => router.push('/admin/vip-bookings')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#6f42c1',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#5a32a3'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6f42c1'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              VIP Bookings
+            </button>
+            <button
+              onClick={() => router.push('/admin/volunteer-bookings')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#f39c12',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e67e22'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f39c12'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Volunteer Bookings
+            </button>
+            <button
+              onClick={() => router.push('/admin/organiser-bookings')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#e74c3c',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#c0392b'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#e74c3c'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+              Organiser Bookings
+            </button>
+            <button
+              onClick={() => router.push('/admin/bulk')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#fd7e14',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e8590c'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fd7e14'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                <path d="M9 14l2 2 4-4"></path>
+              </svg>
+              Bulk Registrations
+            </button>
+            <button
+              onClick={() => router.push('/admin/feedback')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#6f42c1',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#5a32a3'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6f42c1'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Feedback from QR
+            </button>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#6c757d',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#5a6268'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6c757d'}
             >
               Logout
             </button>
@@ -1273,6 +1668,533 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Edit Registration Modal */}
+      {showEditModal && editingRegistration && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          padding: '20px',
+          overflowY: 'auto',
+        }}
+        onClick={() => {
+          setShowEditModal(false)
+          setEditingRegistration(null)
+          setEditForm({})
+        }}
+        >
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '30px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+            position: 'relative',
+          }}
+          onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '25px',
+              borderBottom: '2px solid #f0f0f0',
+              paddingBottom: '15px',
+            }}>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                margin: 0,
+                color: '#333',
+                fontFamily: "'Inter', sans-serif",
+              }}>
+                Edit Registration
+              </h3>
+              <button
+                onClick={() => {
+                  setShowEditModal(false)
+                  setEditingRegistration(null)
+                  setEditForm({})
+                }}
+                style={{
+                  background: '#f0f0f0',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '35px',
+                  height: '35px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  color: '#666',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#e0e0e0'
+                  e.currentTarget.style.color = '#000'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = '#f0f0f0'
+                  e.currentTarget.style.color = '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Form Fields */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              {/* Ticket Number (Read-only) */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Ticket Number
+                </label>
+                <input
+                  type="text"
+                  value={editingRegistration.ticket_no}
+                  disabled
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    backgroundColor: '#f5f5f5',
+                    color: '#999',
+                    cursor: 'not-allowed',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name || ''}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                />
+              </div>
+
+              {/* Mobile Number */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Mobile Number *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.mobile_number || ''}
+                  onChange={(e) => setEditForm({ ...editForm, mobile_number: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={editForm.email || ''}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                />
+              </div>
+
+              {/* Age */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Age
+                </label>
+                <input
+                  type="number"
+                  value={editForm.age || ''}
+                  onChange={(e) => setEditForm({ ...editForm, age: e.target.value ? parseInt(e.target.value) : null })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                />
+              </div>
+
+              {/* Location */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={editForm.location || ''}
+                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                />
+              </div>
+
+              {/* Company Name */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  value={editForm.company_name || ''}
+                  onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                />
+              </div>
+
+              {/* Referred By */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Referred By
+                </label>
+                <select
+                  value={editForm.referred_by || ''}
+                  onChange={(e) => setEditForm({ ...editForm, referred_by: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                >
+                  <option value="">Select...</option>
+                  <option value="BNI_MEMBERS">BNI Members</option>
+                  <option value="FLEX">Flex</option>
+                  <option value="SOCIAL_MEDIA">Social Media</option>
+                  <option value="FRIENDS">Friends</option>
+                </select>
+              </div>
+
+              {/* Registration For */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Registration Type
+                </label>
+                <select
+                  value={editForm.registration_for || ''}
+                  onChange={(e) => setEditForm({ ...editForm, registration_for: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                >
+                  <option value="">Select...</option>
+                  <option value="BNI_CHETTINAD">BNI Chettinad</option>
+                  <option value="BNI_THALAIVAS">BNI Thalaivas</option>
+                  <option value="BNI_MADURAI">BNI Madurai</option>
+                  <option value="PUBLIC">Public</option>
+                  <option value="STUDENTS">Students</option>
+                </select>
+              </div>
+
+              {/* Payment Status */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Payment Status
+                </label>
+                <select
+                  value={editForm.payment_status || ''}
+                  onChange={(e) => setEditForm({ ...editForm, payment_status: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                >
+                  <option value="SUCCESS">SUCCESS</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="FAILED">FAILED</option>
+                </select>
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  marginBottom: '8px',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  Amount
+                </label>
+                <input
+                  type="text"
+                  value={editForm.amount || ''}
+                  onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #d0d0d0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: "'Inter', sans-serif",
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff6600'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              marginTop: '25px',
+              paddingTop: '20px',
+              borderTop: '1px solid #f0f0f0',
+            }}>
+              <button
+                onClick={handleSaveEdit}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  fontFamily: "'Inter', sans-serif",
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 3px 10px rgba(40, 167, 69, 0.3)',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 5px 15px rgba(40, 167, 69, 0.4)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 3px 10px rgba(40, 167, 69, 0.3)'
+                }}
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => {
+                  setShowEditModal(false)
+                  setEditingRegistration(null)
+                  setEditForm({})
+                }}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  fontFamily: "'Inter', sans-serif",
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#5a6268'
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = '#6c757d'
+                  e.currentTarget.style.transform = 'translateY(0)'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
         <h2 style={{
@@ -1298,68 +2220,6 @@ export default function AdminDashboard() {
             {error}
           </div>
         )}
-
-        {/* Search and Filter Controls */}
-        <div style={{
-          marginBottom: '20px',
-          display: 'flex',
-          gap: '10px',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-        }}>
-          <input
-            type="text"
-            placeholder="Search by name, ticket no, email or mobile..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              flex: 1,
-              minWidth: '250px',
-              padding: '12px 16px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontFamily: "'Inter', sans-serif",
-            }}
-          />
-          <select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            style={{
-              padding: '12px 16px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontFamily: "'Inter', sans-serif",
-              minWidth: '150px',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="ALL">All Payments</option>
-            <option value="SUCCESS">Paid</option>
-            <option value="PENDING">Pending</option>
-            <option value="FAILED">Failed</option>
-          </select>
-          <button
-            onClick={exportToCSV}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '600',
-              fontFamily: "'Inter', sans-serif",
-              cursor: 'pointer',
-              transition: 'background-color 0.2s ease',
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
-          >
-            Export to CSV
-          </button>
-        </div>
 
         {/* Statistics Dashboard */}
         <div style={{
@@ -1428,7 +2288,7 @@ export default function AdminDashboard() {
                   fontWeight: '600',
                   fontFamily: "'Inter', sans-serif",
                 }}>
-                  Paid
+                  Confirmed
                 </span>
                 <span style={{
                   fontSize: '1.5rem',
@@ -1484,6 +2344,71 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* Gateway Verification Status */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '8px',
+            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+            padding: '25px',
+            border: '1px solid #e0e0e0',
+          }}>
+            <h3 style={{
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: '#666',
+              marginBottom: '15px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              fontFamily: "'Inter', sans-serif",
+            }}>
+              Gateway Verification
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{
+                  padding: '6px 14px',
+                  backgroundColor: '#17a2b8',
+                  color: 'white',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  🔒 Verified
+                </span>
+                <span style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: '#17a2b8',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  {registrations.filter(r => r.gateway_verified).length}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{
+                  padding: '6px 14px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  📝 Manual
+                </span>
+                <span style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: '#6c757d',
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                  {registrations.filter(r => !r.gateway_verified && r.payment_status === 'SUCCESS').length}
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Total Amount Collected */}
           <div style={{
             background: '#ffffff',
@@ -1501,7 +2426,7 @@ export default function AdminDashboard() {
               letterSpacing: '0.5px',
               fontFamily: "'Inter', sans-serif",
             }}>
-              Total Amount Paid
+              Total Amount Collected
             </h3>
             <p style={{
               fontSize: '2.5rem',
@@ -1542,45 +2467,6 @@ export default function AdminDashboard() {
             gap: '15px',
           }}>
             <div
-              onClick={() => router.push('/admin/category?type=BNI_THALAIVAS')}
-              style={{
-                padding: '15px',
-                background: '#f8f9fa',
-                borderRadius: '6px',
-                borderLeft: '4px solid #ff0000',
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 0, 0, 0.2)'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
-              <p style={{
-                fontSize: '0.85rem',
-                color: '#666',
-                marginBottom: '8px',
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: '500',
-              }}>
-                BNI Thalaivas
-              </p>
-              <p style={{
-                fontSize: '1.8rem',
-                fontWeight: '700',
-                color: '#ff0000',
-                margin: 0,
-                fontFamily: "'Inter', sans-serif",
-              }}>
-                {registrations.filter(r => r.registration_for === 'BNI_THALAIVAS').length}
-              </p>
-            </div>
-
-            <div
               onClick={() => router.push('/admin/category?type=BNI_CHETTINAD')}
               style={{
                 padding: '15px',
@@ -1616,6 +2502,45 @@ export default function AdminDashboard() {
                 fontFamily: "'Inter', sans-serif",
               }}>
                 {registrations.filter(r => r.registration_for === 'BNI_CHETTINAD').length}
+              </p>
+            </div>
+
+            <div
+              onClick={() => router.push('/admin/category?type=BNI_THALAIVAS')}
+              style={{
+                padding: '15px',
+                background: '#f8f9fa',
+                borderRadius: '6px',
+                borderLeft: '4px solid #ff0000',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 0, 0, 0.2)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
+              <p style={{
+                fontSize: '0.85rem',
+                color: '#666',
+                marginBottom: '8px',
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: '500',
+              }}>
+                BNI Thalaivas
+              </p>
+              <p style={{
+                fontSize: '1.8rem',
+                fontWeight: '700',
+                color: '#ff0000',
+                margin: 0,
+                fontFamily: "'Inter', sans-serif",
+              }}>
+                {registrations.filter(r => r.registration_for === 'BNI_THALAIVAS').length}
               </p>
             </div>
 
@@ -1777,6 +2702,68 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Search and Filter Controls */}
+        <div style={{
+          marginBottom: '20px',
+          display: 'flex',
+          gap: '10px',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}>
+          <input
+            type="text"
+            placeholder="Search by name, ticket no, email or mobile..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              flex: 1,
+              minWidth: '250px',
+              padding: '12px 16px',
+              border: '1px solid #d0d0d0',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontFamily: "'Inter', sans-serif",
+            }}
+          />
+          <select
+            value={paymentFilter}
+            onChange={(e) => setPaymentFilter(e.target.value)}
+            style={{
+              padding: '12px 16px',
+              border: '1px solid #d0d0d0',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontFamily: "'Inter', sans-serif",
+              minWidth: '150px',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="ALL">All Payments</option>
+            <option value="SUCCESS">Confirmed</option>
+            <option value="PENDING">Pending</option>
+            <option value="FAILED">Failed</option>
+          </select>
+          <button
+            onClick={exportToCSV}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '600',
+              fontFamily: "'Inter', sans-serif",
+              cursor: 'pointer',
+              transition: 'background-color 0.2s ease',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
+          >
+            Export to CSV
+          </button>
+        </div>
+
         {/* Registrations Table */}
         <div style={{
           background: '#ffffff',
@@ -1799,6 +2786,8 @@ export default function AdminDashboard() {
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Email</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Company</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Type</th>
+                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Referred By</th>
+                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Registered By</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Status</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Amount</th>
                 <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontSize: '14px', fontWeight: '600', color: '#333' }}>Created</th>
@@ -1811,8 +2800,36 @@ export default function AdminDashboard() {
                 return (
                   <tr key={reg.id} id={`reg-${reg.id}`} style={{ borderBottom: '1px solid #dee2e6', transition: 'background-color 0.3s ease' }}>
                     <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>{reg.ticket_no}</td>
-                    <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>{reg.name}</td>
-                    <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>{reg.mobile_number}</td>
+                    <td style={{ padding: '12px', fontSize: '14px' }}>
+                      <span
+                        onClick={() => handleCopyWhatsAppMessage(reg)}
+                        style={{
+                          color: reg.message_copied ? '#28a745' : '#0066cc',
+                          cursor: 'pointer',
+                          fontWeight: '500',
+                          transition: 'color 0.3s ease',
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                        onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                      >
+                        {reg.name}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '14px' }}>
+                      <a
+                        href={`tel:${reg.mobile_number}`}
+                        style={{
+                          color: '#0066cc',
+                          textDecoration: 'none',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                        onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                      >
+                        {reg.mobile_number}
+                      </a>
+                    </td>
                     <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>{reg.email}</td>
                     <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>{reg.company_name || '-'}</td>
                     <td style={{ padding: '12px', fontSize: '14px' }}>
@@ -1826,6 +2843,31 @@ export default function AdminDashboard() {
                       }}>
                         {reg.registration_for || '-'}
                       </span>
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>
+                      {reg.referred_by ? (
+                        <span style={{
+                          padding: '4px 10px',
+                          backgroundColor: '#fff3e0',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          color: '#ff6600',
+                          fontWeight: '500',
+                        }}>
+                          {reg.referred_by.replace(/_/g, ' ')}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#999' }}>-</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '14px', color: '#333' }}>
+                      {reg.is_primary_booker ? (
+                        <span style={{ color: '#666', fontStyle: 'italic' }}>Self</span>
+                      ) : (
+                        <span style={{ color: '#0066cc', fontWeight: '500' }}>
+                          {reg.primary_booker_name || '-'}
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '12px' }}>
                       <span style={{
@@ -1854,7 +2896,7 @@ export default function AdminDashboard() {
                           title="Share via WhatsApp"
                           style={{
                             padding: '8px',
-                            backgroundColor: '#25D366',
+                            backgroundColor: sharedWhatsApp.has(reg.id) ? '#25D366' : '#dc3545',
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
@@ -1864,8 +2906,8 @@ export default function AdminDashboard() {
                             justifyContent: 'center',
                             transition: 'background-color 0.2s ease',
                           }}
-                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1da851'}
-                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#25D366'}
+                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = sharedWhatsApp.has(reg.id) ? '#1da851' : '#c82333'}
+                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = sharedWhatsApp.has(reg.id) ? '#25D366' : '#dc3545'}
                         >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
@@ -1894,6 +2936,31 @@ export default function AdminDashboard() {
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                             <polyline points="22,6 12,13 2,6"></polyline>
+                          </svg>
+                        </button>
+
+                        {/* Edit Icon */}
+                        <button
+                          onClick={() => handleEdit(reg)}
+                          title="Edit Registration"
+                          style={{
+                            padding: '8px',
+                            backgroundColor: '#ffc107',
+                            color: '#000',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'background-color 0.2s ease',
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e0a800'}
+                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ffc107'}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                           </svg>
                         </button>
 

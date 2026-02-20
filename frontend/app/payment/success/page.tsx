@@ -8,6 +8,7 @@ function PaymentSuccessContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading')
   const [ticketNo, setTicketNo] = useState('')
   const [message, setMessage] = useState('')
+  const [registrationId, setRegistrationId] = useState<number | null>(null)
 
   useEffect(() => {
     verifyPayment()
@@ -47,6 +48,7 @@ function PaymentSuccessContent() {
         if (data.payment_status === 'SUCCESS') {
           setStatus('success')
           setTicketNo(data.ticket_no || storedTicketNo || '')
+          setRegistrationId(data.registration_id || null)
           setMessage('Payment successful! Your registration is confirmed.')
 
           // Clear session storage
@@ -63,6 +65,27 @@ function PaymentSuccessContent() {
     } catch (error) {
       setStatus('failed')
       setMessage('Error verifying payment. Please contact support.')
+    }
+  }
+
+  const handleViewEPass = async () => {
+    if (!registrationId) {
+      alert('Unable to generate E-Pass. Registration ID not found.')
+      return
+    }
+
+    try {
+      const response = await fetch(`https://api.bnievent.rfidpro.in/api/registrations/${registrationId}/generate-id-card/`)
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        window.open(url, '_blank')
+      } else {
+        alert('Failed to generate E-Pass')
+      }
+    } catch (error) {
+      alert('Error generating E-Pass')
     }
   }
 
@@ -108,23 +131,23 @@ function PaymentSuccessContent() {
               <h2 style={{ color: '#007bff', margin: 0, fontSize: '32px' }}>{ticketNo}</h2>
             </div>
           )}
-          <p style={{ fontSize: '14px', color: '#666' }}>
+          <p style={{ fontSize: '14px', color: '#666', marginBottom: '25px' }}>
             Please save your ticket number for future reference.
           </p>
-          <div style={{ marginTop: '30px' }}>
+          <div className="button-container">
+            <button
+              onClick={handleViewEPass}
+              className="btn btn-download"
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e55a00'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ff6600'}
+            >
+              Download ID Card
+            </button>
             <a
               href="/"
-              style={{
-                display: 'inline-block',
-                padding: '12px 30px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                fontSize: '16px',
-              }}
+              className="btn btn-home"
             >
-              Back to Home
+              Go Back to Home
             </a>
           </div>
         </div>
@@ -180,6 +203,81 @@ function PaymentSuccessContent() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        .button-container {
+          display: flex;
+          gap: 12px;
+          justify-content: center;
+          align-items: center;
+          flex-wrap: wrap;
+          margin-top: 25px;
+        }
+
+        .btn {
+          display: inline-block;
+          padding: 10px 24px;
+          border: none;
+          border-radius: 5px;
+          font-size: 14px;
+          font-weight: 600;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: none;
+          text-align: center;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+          transform: translateY(-1px);
+        }
+
+        .btn:active {
+          transform: translateY(0);
+        }
+
+        .btn-download {
+          background-color: #ff6600;
+          color: white;
+        }
+
+        .btn-download:hover {
+          background-color: #e55a00;
+        }
+
+        .btn-home {
+          background-color: #28a745;
+          color: white;
+        }
+
+        .btn-home:hover {
+          background-color: #218838;
+        }
+
+        /* Mobile responsive styles */
+        @media (max-width: 480px) {
+          .button-container {
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+          }
+
+          .btn {
+            width: 100%;
+            max-width: 280px;
+            padding: 12px 20px;
+            font-size: 14px;
+          }
+        }
+
+        /* Tablet and small desktop */
+        @media (min-width: 481px) and (max-width: 768px) {
+          .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+          }
         }
       `}</style>
     </div>

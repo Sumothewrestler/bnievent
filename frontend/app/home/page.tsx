@@ -128,6 +128,10 @@ export default function HomePage() {
           />
         </a>
       </div>
+      <div className="footer">
+        <span className="footer-designed">Designed by</span>
+        <span className="footer-team">BNI CHETTINAD - SOFTWARE TEAM</span>
+      </div>
       <style jsx>{`
         .content-container {
           position: absolute;
@@ -139,7 +143,7 @@ export default function HomePage() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 30px;
+          gap: 25px;
           width: 100%;
           max-width: 400px;
           padding: 0 20px;
@@ -165,22 +169,22 @@ export default function HomePage() {
 
         .book-button {
           display: inline-block;
-          padding: 20px 50px;
-          margin-bottom: 40px;
+          padding: 12px 30px;
           background: linear-gradient(135deg, #ff6600 0%, #ff9933 50%, #ff6600 100%);
           background-size: 200% 100%;
           color: #ffffff;
-          font-size: 1.8rem;
+          font-size: 1.1rem;
           font-weight: 700;
-          letter-spacing: 1px;
+          letter-spacing: 0.5px;
           font-family: 'Inter', 'Arial', 'Helvetica Neue', sans-serif;
           text-decoration: none;
-          border-radius: 12px;
-          box-shadow: 0 8px 24px rgba(255, 102, 0, 0.4);
+          border-radius: 8px;
+          box-shadow: 0 4px 16px rgba(255, 102, 0, 0.4);
           transition: all 0.3s ease;
           cursor: pointer;
           border: none;
           animation: gradientShimmer 3s ease infinite;
+          white-space: nowrap;
         }
 
         @keyframes gradientShimmer {
@@ -235,13 +239,13 @@ export default function HomePage() {
 
         @media (max-width: 768px) {
           .content-container {
-            gap: 25px;
+            gap: 20px;
             max-width: 350px;
           }
 
           .book-button {
-            font-size: 1.5rem;
-            padding: 18px 40px;
+            font-size: 1rem;
+            padding: 10px 25px;
           }
 
           .gif-container {
@@ -255,14 +259,14 @@ export default function HomePage() {
 
         @media (max-width: 480px) {
           .content-container {
-            gap: 20px;
+            gap: 18px;
             max-width: 300px;
             padding: 0 15px;
           }
 
           .book-button {
-            font-size: 1.3rem;
-            padding: 16px 35px;
+            font-size: 0.9rem;
+            padding: 8px 20px;
           }
 
           .gif-container {
@@ -276,8 +280,117 @@ export default function HomePage() {
 
         @media (max-width: 380px) {
           .book-button {
-            font-size: 1.1rem;
-            padding: 14px 30px;
+            font-size: 0.85rem;
+            padding: 8px 18px;
+          }
+        }
+
+        .footer {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 10;
+          font-family: 'Inter', 'Arial', 'Helvetica Neue', sans-serif;
+          text-align: center;
+          padding: 12px 30px;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+          border-radius: 30px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 102, 0, 0.1);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 102, 0, 0.2);
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          transition: all 0.3s ease;
+        }
+
+        .footer:hover {
+          transform: translateX(-50%) translateY(-2px);
+          box-shadow: 0 6px 25px rgba(255, 102, 0, 0.2), 0 0 0 1px rgba(255, 102, 0, 0.3);
+        }
+
+        .footer-designed {
+          font-size: 0.75rem;
+          font-weight: 500;
+          color: #666;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+
+        .footer-team {
+          font-size: 0.95rem;
+          font-weight: 700;
+          background: linear-gradient(135deg, #ff0000 0%, #ff6600 50%, #ff3300 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          letter-spacing: 0.8px;
+        }
+
+        @media (max-width: 768px) {
+          .footer {
+            padding: 10px 25px;
+            bottom: 15px;
+          }
+
+          .footer-designed {
+            font-size: 0.7rem;
+          }
+
+          .footer-team {
+            font-size: 0.85rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .footer {
+            padding: 8px 20px;
+            bottom: 12px;
+            max-width: 95%;
+            gap: 1px;
+          }
+
+          .footer-designed {
+            font-size: 0.6rem;
+          }
+
+          .footer-team {
+            font-size: 0.65rem;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .footer {
+            padding: 6px 14px;
+          }
+
+          .footer-designed {
+            font-size: 0.55rem;
+          }
+
+          .footer-team {
+            font-size: 0.6rem;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+          }
+        }
+
+        @media (max-width: 320px) {
+          .footer {
+            padding: 6px 12px;
+          }
+
+          .footer-designed {
+            font-size: 0.5rem;
+          }
+
+          .footer-team {
+            font-size: 0.55rem;
+            letter-spacing: 0.1px;
+            white-space: nowrap;
           }
         }
       `}</style>

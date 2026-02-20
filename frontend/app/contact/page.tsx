@@ -4,8 +4,8 @@ export default function ContactUs() {
       <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Contact Us</h1>
 
       <div style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginBottom: '15px' }}>BNI Event Registration</h2>
-        <p style={{ marginBottom: '10px' }}>For any queries or support regarding event registration and payments, please reach out to us:</p>
+        <h2 style={{ fontSize: '20px', marginBottom: '15px' }}>BNI Chettinad Event</h2>
+        <p style={{ marginBottom: '10px' }}>For any queries or support regarding event registration, payments, or general inquiries, please reach out to us:</p>
       </div>
 
       <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
@@ -13,27 +13,65 @@ export default function ContactUs() {
 
         <div style={{ marginBottom: '15px' }}>
           <strong>Email:</strong>
-          <p style={{ margin: '5px 0' }}>support@bnievent.com</p>
-          <p style={{ margin: '5px 0' }}>info@bnievent.com</p>
+          <p style={{ margin: '5px 0', fontSize: '16px' }}>digitalflareup@gmail.com</p>
         </div>
 
         <div style={{ marginBottom: '15px' }}>
           <strong>Phone:</strong>
-          <p style={{ margin: '5px 0' }}>+91 XXX XXX XXXX</p>
+          <p style={{ margin: '5px 0', fontSize: '16px' }}>+91 94425 05671</p>
         </div>
 
         <div style={{ marginBottom: '15px' }}>
-          <strong>Business Hours:</strong>
-          <p style={{ margin: '5px 0' }}>Monday - Friday: 9:00 AM - 6:00 PM</p>
-          <p style={{ margin: '5px 0' }}>Saturday: 9:00 AM - 1:00 PM</p>
-          <p style={{ margin: '5px 0' }}>Sunday: Closed</p>
+          <strong>Response Time:</strong>
+          <p style={{ margin: '5px 0' }}>Within 24-48 hours on business days</p>
+        </div>
+      </div>
+
+      <div style={{ backgroundColor: '#e7f3ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #bee5eb' }}>
+        <h3 style={{ fontSize: '18px', marginBottom: '15px' }}>Event Details</h3>
+
+        <div style={{ marginBottom: '10px' }}>
+          <strong>Event Name:</strong>
+          <p style={{ margin: '5px 0' }}>BNI Chettinad</p>
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <strong>Date:</strong>
+          <p style={{ margin: '5px 0' }}>21st February 2026 (Sunday)</p>
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <strong>Time:</strong>
+          <p style={{ margin: '5px 0' }}>3:30 PM</p>
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <strong>Venue:</strong>
+          <p style={{ margin: '5px 0' }}>L.C.T.L Palaniappa Chettiar Memorial Auditorium, Karaikudi</p>
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <strong>Registration Fee:</strong>
+          <p style={{ margin: '5px 0' }}>Rs. 300 to Rs. 600 (varies by participant category)</p>
         </div>
       </div>
 
       <div style={{ marginBottom: '30px' }}>
-        <h3 style={{ fontSize: '18px', marginBottom: '15px' }}>Support</h3>
-        <p>For technical support, payment issues, or registration queries, our team is here to help you.</p>
-        <p>Response time: Within 24 hours on business days.</p>
+        <h3 style={{ fontSize: '18px', marginBottom: '15px' }}>What We Can Help With</h3>
+        <ul style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
+          <li>Event registration assistance</li>
+          <li>Payment and transaction queries</li>
+          <li>Technical support</li>
+          <li>Ticket information</li>
+          <li>Event details and schedule</li>
+          <li>General inquiries</li>
+        </ul>
+      </div>
+
+      <div style={{ backgroundColor: '#fff3cd', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffc107' }}>
+        <p style={{ margin: 0 }}>
+          <strong>Note:</strong> For policy information, please refer to our Terms & Conditions and Refund Policy pages.
+        </p>
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '40px' }}>

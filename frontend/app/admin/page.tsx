@@ -171,11 +171,29 @@ export default function AdminLogin() {
           height: 60px;
           width: auto;
           object-fit: contain;
-          transition: opacity 0.2s ease;
+          border-radius: 8px;
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+          box-shadow: 0 0 15px rgba(255, 102, 0, 0.6),
+                      0 0 25px rgba(255, 102, 0, 0.4),
+                      0 0 35px rgba(255, 102, 0, 0.3);
+          animation: logoGlow 2s ease-in-out infinite;
         }
 
-        .header-logo:hover {
-          opacity: 0.8;
+        @keyframes logoGlow {
+          0%, 100% {
+            box-shadow: 0 0 15px rgba(255, 102, 0, 0.6),
+                        0 0 25px rgba(255, 102, 0, 0.4),
+                        0 0 35px rgba(255, 102, 0, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 20px rgba(255, 102, 0, 0.8),
+                        0 0 35px rgba(255, 102, 0, 0.6),
+                        0 0 50px rgba(255, 102, 0, 0.4);
+          }
+        }
+
+        .header-logo-link:hover .header-logo {
+          transform: scale(1.05);
         }
 
         .header-title {
