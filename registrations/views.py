@@ -1443,22 +1443,51 @@ def get_all_feedback(request):
         # Calculate statistics
         total_feedback = feedbacks.count()
         avg_overall = feedbacks.aggregate(avg=models.Avg('overall_rating'))['avg'] or 0
+        avg_speaker = feedbacks.aggregate(avg=models.Avg('speaker_rating'))['avg'] or 0
 
-        # NPS calculation
-        promoters = feedbacks.filter(recommendation_score__gte=9).count()
-        detractors = feedbacks.filter(recommendation_score__lte=6).count()
-        nps_score = ((promoters - detractors) / total_feedback * 100) if total_feedback > 0 else 0
+        # Count willingness to join BNI
+        join_yes = feedbacks.filter(attend_future='YES').count()
+        join_maybe = feedbacks.filter(attend_future='MAYBE').count()
+        join_no = feedbacks.filter(attend_future='NO').count()
 
         return Response({
             'success': True,
             'total_feedback': total_feedback,
             'average_rating': round(avg_overall, 2),
-            'nps_score': round(nps_score, 2),
-            'promoters': promoters,
-            'detractors': detractors,
+            'average_speaker_rating': round(avg_speaker, 2),
+            'join_bni': {
+                'yes': join_yes,
+                'maybe': join_maybe,
+                'no': join_no
+            },
             'feedback': serializer.data
         }, status=status.HTTP_200_OK)
 
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_feedback(request, feedback_id):
+    """
+    Delete a specific feedback entry (admin only)
+    """
+    try:
+        feedback = EventFeedback.objects.get(id=feedback_id)
+        feedback.delete()
+
+        return Response({
+            'success': True,
+            'message': 'Feedback deleted successfully'
+        }, status=status.HTTP_200_OK)
+
+    except EventFeedback.DoesNotExist:
+        return Response({
+            'error': 'Feedback not found'
+        }, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({
             'error': str(e)

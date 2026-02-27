@@ -699,14 +699,13 @@ class Sponsor(models.Model):
 
 
 class EventFeedback(models.Model):
-    """Event feedback and ratings from attendees"""
+    """Event feedback and ratings from attendees - Simplified version"""
     RATING_CHOICES = [(i, i) for i in range(1, 6)]  # 1-5 stars
-    NPS_CHOICES = [(i, i) for i in range(0, 11)]  # 0-10 NPS score
 
     ATTEND_FUTURE_CHOICES = [
         ('YES', 'Yes'),
         ('NO', 'No'),
-        ('MAYBE', 'Maybe'),
+        ('MAYBE', 'May be'),
     ]
 
     # Link to registration
@@ -717,74 +716,23 @@ class EventFeedback(models.Model):
         help_text="One feedback per registration"
     )
 
-    # Star ratings (1-5)
+    # Star ratings (1-5) - Required fields
     overall_rating = models.IntegerField(
         choices=RATING_CHOICES,
         help_text="Overall event experience (1-5 stars)"
     )
-    venue_rating = models.IntegerField(
-        choices=RATING_CHOICES,
-        blank=True,
-        null=True,
-        help_text="Venue quality"
-    )
-    food_rating = models.IntegerField(
-        choices=RATING_CHOICES,
-        blank=True,
-        null=True,
-        help_text="Food & beverages"
-    )
     speaker_rating = models.IntegerField(
         choices=RATING_CHOICES,
-        blank=True,
-        null=True,
-        help_text="Speaker/presentation quality"
-    )
-    networking_rating = models.IntegerField(
-        choices=RATING_CHOICES,
-        blank=True,
-        null=True,
-        help_text="Networking opportunities"
-    )
-    organization_rating = models.IntegerField(
-        choices=RATING_CHOICES,
-        blank=True,
-        null=True,
-        help_text="Event organization"
+        default=3,
+        help_text="Speaker quality (1-5 stars)"
     )
 
-    # NPS Score (Net Promoter Score: 0-10)
-    recommendation_score = models.IntegerField(
-        choices=NPS_CHOICES,
-        blank=True,
-        null=True,
-        help_text="How likely to recommend to others? (0-10)"
-    )
-
-    # Open-ended feedback
-    liked_most = models.TextField(
-        blank=True,
-        null=True,
-        help_text="What did you like most about the event?"
-    )
-    improvements = models.TextField(
-        blank=True,
-        null=True,
-        help_text="What could be improved?"
-    )
-    additional_comments = models.TextField(
-        blank=True,
-        null=True,
-        help_text="Any additional comments or suggestions"
-    )
-
-    # Future attendance
+    # Willingness to join BNI Chettinad
     attend_future = models.CharField(
         max_length=10,
         choices=ATTEND_FUTURE_CHOICES,
-        blank=True,
-        null=True,
-        help_text="Would you attend future events?"
+        default='MAYBE',
+        help_text="Are you willing to join BNI Chettinad to expand your business?"
     )
 
     # Metadata
@@ -809,25 +757,5 @@ class EventFeedback(models.Model):
         return f"Feedback from {self.registration.name} ({self.registration.ticket_no}) - {self.overall_rating}⭐"
 
     def get_average_rating(self):
-        """Calculate average of all ratings"""
-        ratings = [
-            self.overall_rating,
-            self.venue_rating or 0,
-            self.food_rating or 0,
-            self.speaker_rating or 0,
-            self.networking_rating or 0,
-            self.organization_rating or 0,
-        ]
-        valid_ratings = [r for r in ratings if r > 0]
-        return sum(valid_ratings) / len(valid_ratings) if valid_ratings else 0
-
-    def get_nps_category(self):
-        """Categorize NPS score: Detractor (0-6), Passive (7-8), Promoter (9-10)"""
-        if self.recommendation_score is None:
-            return None
-        if self.recommendation_score >= 9:
-            return 'Promoter'
-        elif self.recommendation_score >= 7:
-            return 'Passive'
-        else:
-            return 'Detractor'
+        """Calculate average of overall and speaker ratings"""
+        return (self.overall_rating + self.speaker_rating) / 2

@@ -583,7 +583,7 @@ function FeedbackContent() {
                     color: '#374151',
                   }}
                 >
-                  R u willing to join in BNI Chettinad? *
+                  Are you willing to join BNI Chettinad to expand your business? *
                 </label>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   {[

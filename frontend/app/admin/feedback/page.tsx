@@ -66,7 +66,7 @@ function AttendBadge({ value }: { value: string | null }) {
 export default function AdminFeedbackPage() {
   const router = useRouter()
   const [isReady, setIsReady] = useState(false)
-  const [data, setData] = useState<FeedbackListResponse | null>(null)
+  const [data, setData] = useState<any | null>(null)
   const [feedbackList, setFeedbackList] = useState<EventFeedback[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -74,6 +74,8 @@ export default function AdminFeedbackPage() {
   const [categoryFilter, setCategoryFilter] = useState('ALL')
   const [ratingFilter, setRatingFilter] = useState('ALL')
   const [selectedFeedback, setSelectedFeedback] = useState<EventFeedback | null>(null)
+  const [feedbackToDelete, setFeedbackToDelete] = useState<EventFeedback | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -100,6 +102,42 @@ export default function AdminFeedbackPage() {
     }
   }
 
+  const handleDeleteFeedback = async () => {
+    if (!feedbackToDelete) return
+
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      router.replace('/admin')
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`https://api.bnievent.rfidpro.in/api/feedback/delete/${feedbackToDelete.id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        setFeedbackToDelete(null)
+        fetchFeedback() // Refresh the list
+        alert('Feedback deleted successfully')
+      } else if (response.status === 401) {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        router.replace('/admin')
+      } else {
+        alert('Failed to delete feedback')
+      }
+    } catch (error) {
+      alert('Error connecting to server')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const filteredFeedback = feedbackList.filter((fb) => {
     const term = searchTerm.toLowerCase()
     const matchesSearch =
@@ -118,29 +156,20 @@ export default function AdminFeedbackPage() {
 
   const exportToCSV = () => {
     const headers = [
-      'S.no', 'Ticket No', 'Name', 'Category', 'Submitted At',
-      'Overall', 'Venue', 'Food', 'Speaker', 'Networking', 'Organization',
-      'NPS Score', 'NPS Category', 'Attend Future',
-      'Liked Most', 'Improvements', 'Additional Comments',
+      'S.no', 'Ticket No', 'Name', 'Mobile', 'Category', 'Submitted At',
+      'Overall Rating', 'Speaker Rating', 'Join BNI?', 'Average Rating',
     ]
     const rows = filteredFeedback.map((fb, i) => [
       i + 1,
       fb.ticket_no,
       fb.attendee_name,
+      fb.attendee_mobile,
       CATEGORY_LABELS[fb.registration_category] || fb.registration_category,
       new Date(fb.submitted_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       fb.overall_rating,
-      fb.venue_rating ?? '',
-      fb.food_rating ?? '',
       fb.speaker_rating ?? '',
-      fb.networking_rating ?? '',
-      fb.organization_rating ?? '',
-      fb.recommendation_score ?? '',
-      fb.nps_category ?? '',
       fb.attend_future ?? '',
-      fb.liked_most ?? '',
-      fb.improvements ?? '',
-      fb.additional_comments ?? '',
+      fb.average_rating?.toFixed(2) ?? '',
     ])
     const csv = [headers, ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
@@ -265,10 +294,11 @@ export default function AdminFeedbackPage() {
           }}>
             {[
               { label: 'Total Responses', value: data.total_feedback, color: '#6f42c1' },
-              { label: 'Avg Rating', value: `${data.average_rating.toFixed(2)} ★`, color: '#f59e0b' },
-              { label: 'NPS Score', value: data.nps_score.toFixed(1), color: data.nps_score >= 0 ? '#28a745' : '#dc3545' },
-              { label: 'Promoters', value: data.promoters, color: '#28a745' },
-              { label: 'Detractors', value: data.detractors, color: '#dc3545' },
+              { label: 'Avg Overall', value: `${data.average_rating?.toFixed(2) || 0} ★`, color: '#f59e0b' },
+              { label: 'Avg Speaker', value: `${data.average_speaker_rating?.toFixed(2) || 0} ★`, color: '#17a2b8' },
+              { label: 'Want to Join (Yes)', value: data.join_bni?.yes || 0, color: '#28a745' },
+              { label: 'Want to Join (Maybe)', value: data.join_bni?.maybe || 0, color: '#ffc107' },
+              { label: 'Want to Join (No)', value: data.join_bni?.no || 0, color: '#dc3545' },
             ].map((stat) => (
               <div key={stat.label} style={{
                 background: '#ffffff',
@@ -407,7 +437,7 @@ export default function AdminFeedbackPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Inter', sans-serif" }}>
             <thead>
               <tr style={{ backgroundColor: '#f8f9fa' }}>
-                {['#', 'Ticket', 'Name', 'Category', 'Overall', 'Venue', 'Food', 'Speaker', 'Network', 'Org', 'NPS', 'Attend Future', 'Submitted', 'Details'].map((h) => (
+                {['#', 'Ticket', 'Name', 'Mobile', 'Category', 'Overall', 'Speaker', 'Join BNI?', 'Submitted', 'Actions'].map((h) => (
                   <th key={h} style={{
                     padding: '12px 10px',
                     textAlign: 'left',
@@ -431,18 +461,29 @@ export default function AdminFeedbackPage() {
                   <td style={{ padding: '10px', fontSize: '13px', color: '#666' }}>{index + 1}</td>
                   <td style={{ padding: '10px', fontSize: '13px', fontWeight: '600', color: '#333', whiteSpace: 'nowrap' }}>{fb.ticket_no}</td>
                   <td style={{ padding: '10px', fontSize: '13px', color: '#333', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fb.attendee_name}</td>
+                  <td style={{ padding: '10px', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                    <a
+                      href={`tel:${fb.attendee_mobile}`}
+                      style={{
+                        color: '#0066cc',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontWeight: '500',
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                    >
+                      <span style={{ fontSize: '16px' }}>📞</span>
+                      {fb.attendee_mobile}
+                    </a>
+                  </td>
                   <td style={{ padding: '10px', fontSize: '12px', color: '#555', whiteSpace: 'nowrap' }}>
                     {CATEGORY_LABELS[fb.registration_category] || fb.registration_category}
                   </td>
                   <td style={{ padding: '10px' }}><StarDisplay rating={fb.overall_rating} /></td>
-                  <td style={{ padding: '10px' }}><StarDisplay rating={fb.venue_rating} /></td>
-                  <td style={{ padding: '10px' }}><StarDisplay rating={fb.food_rating} /></td>
                   <td style={{ padding: '10px' }}><StarDisplay rating={fb.speaker_rating} /></td>
-                  <td style={{ padding: '10px' }}><StarDisplay rating={fb.networking_rating} /></td>
-                  <td style={{ padding: '10px' }}><StarDisplay rating={fb.organization_rating} /></td>
-                  <td style={{ padding: '10px' }}>
-                    <NPSBadge score={fb.recommendation_score} category={fb.nps_category} />
-                  </td>
                   <td style={{ padding: '10px' }}><AttendBadge value={fb.attend_future} /></td>
                   <td style={{ padding: '10px', fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>
                     {new Date(fb.submitted_at).toLocaleString('en-IN', {
@@ -453,7 +494,7 @@ export default function AdminFeedbackPage() {
                       minute: '2-digit',
                     })}
                   </td>
-                  <td style={{ padding: '10px' }}>
+                  <td style={{ padding: '10px', display: 'flex', gap: '8px' }}>
                     <button
                       onClick={() => setSelectedFeedback(fb)}
                       style={{
@@ -471,6 +512,24 @@ export default function AdminFeedbackPage() {
                       onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6f42c1'}
                     >
                       View
+                    </button>
+                    <button
+                      onClick={() => setFeedbackToDelete(fb)}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#dc3545',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease',
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#c82333'}
+                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#dc3545'}
+                    >
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -553,12 +612,8 @@ export default function AdminFeedbackPage() {
               marginBottom: '20px',
             }}>
               {[
-                { label: 'Overall', value: selectedFeedback.overall_rating },
-                { label: 'Venue', value: selectedFeedback.venue_rating },
-                { label: 'Food', value: selectedFeedback.food_rating },
-                { label: 'Speaker', value: selectedFeedback.speaker_rating },
-                { label: 'Networking', value: selectedFeedback.networking_rating },
-                { label: 'Organization', value: selectedFeedback.organization_rating },
+                { label: 'Overall Experience', value: selectedFeedback.overall_rating },
+                { label: 'Speaker Quality', value: selectedFeedback.speaker_rating },
               ].map((r) => (
                 <div key={r.label} style={{
                   background: '#f8f9fa',
@@ -571,44 +626,112 @@ export default function AdminFeedbackPage() {
               ))}
             </div>
 
-            {/* NPS & Attend */}
+            {/* Join BNI & Average */}
             <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
               <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '12px', flex: 1 }}>
-                <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#666', fontWeight: '600', textTransform: 'uppercase' }}>NPS Score</p>
-                <NPSBadge score={selectedFeedback.recommendation_score} category={selectedFeedback.nps_category} />
-              </div>
-              <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '12px', flex: 1 }}>
-                <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#666', fontWeight: '600', textTransform: 'uppercase' }}>Attend Future?</p>
+                <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#666', fontWeight: '600', textTransform: 'uppercase' }}>Willing to Join BNI?</p>
                 <AttendBadge value={selectedFeedback.attend_future} />
               </div>
-            </div>
-
-            {/* Text Feedback */}
-            {[
-              { label: 'What they liked most', value: selectedFeedback.liked_most },
-              { label: 'Suggestions for improvement', value: selectedFeedback.improvements },
-              { label: 'Additional comments', value: selectedFeedback.additional_comments },
-            ].filter((item) => item.value).map((item) => (
-              <div key={item.label} style={{ marginBottom: '16px' }}>
-                <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#666', fontWeight: '600', textTransform: 'uppercase' }}>{item.label}</p>
-                <p style={{
-                  margin: 0,
-                  padding: '12px',
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: '#333',
-                  lineHeight: '1.6',
-                  border: '1px solid #e5e7eb',
-                }}>
-                  {item.value}
-                </p>
+              <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '12px', flex: 1 }}>
+                <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#666', fontWeight: '600', textTransform: 'uppercase' }}>Average Rating</p>
+                <span style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b' }}>
+                  {selectedFeedback.average_rating?.toFixed(2) || 'N/A'} ★
+                </span>
               </div>
-            ))}
+            </div>
 
             <p style={{ margin: '16px 0 0', fontSize: '12px', color: '#999', textAlign: 'right' }}>
               Submitted: {new Date(selectedFeedback.submitted_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {feedbackToDelete && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10001,
+          padding: '20px',
+        }}
+          onClick={() => !deleting && setFeedbackToDelete(null)}
+        >
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            maxWidth: '450px',
+            width: '100%',
+            padding: '30px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+              <div style={{ fontSize: '48px', marginBottom: '15px' }}>⚠️</div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: '0 0 10px 0', color: '#dc3545' }}>
+                Delete Feedback?
+              </h2>
+              <p style={{ fontSize: '0.95rem', color: '#666', margin: 0, lineHeight: '1.5' }}>
+                Are you sure you want to delete feedback from <strong>{feedbackToDelete.attendee_name}</strong> (Ticket: {feedbackToDelete.ticket_no})? This action cannot be undone.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setFeedbackToDelete(null)}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  backgroundColor: '#6c757d',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  opacity: deleting ? 0.6 : 1,
+                  transition: 'background-color 0.2s ease',
+                }}
+                onMouseOver={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#5a6268'
+                }}
+                onMouseOut={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#6c757d'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteFeedback}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  backgroundColor: deleting ? '#cccccc' : '#dc3545',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.2s ease',
+                }}
+                onMouseOver={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#c82333'
+                }}
+                onMouseOut={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#dc3545'
+                }}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

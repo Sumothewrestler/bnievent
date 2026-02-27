@@ -26,6 +26,8 @@ export default function ScanLogs() {
   const [actionFilter, setActionFilter] = useState('ALL')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(50)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -74,27 +76,8 @@ export default function ScanLogs() {
     }
   }
 
-  // Group logs by day and show only one entry per day
-  const groupLogsByDay = (logs: ScanLog[]) => {
-    const grouped = new Map<string, ScanLog>()
-
-    logs.forEach(log => {
-      const date = new Date(log.scanned_at).toLocaleDateString('en-IN', {
-        timeZone: 'Asia/Kolkata'
-      })
-
-      // Keep only the latest log for each day
-      if (!grouped.has(date) || new Date(log.scanned_at) > new Date(grouped.get(date)!.scanned_at)) {
-        grouped.set(date, log)
-      }
-    })
-
-    return Array.from(grouped.values()).sort((a, b) =>
-      new Date(b.scanned_at).getTime() - new Date(a.scanned_at).getTime()
-    )
-  }
-
-  const filteredLogs = groupLogsByDay(logs.filter(log => {
+  // Filter logs without grouping - show all entries
+  const filteredLogs = logs.filter(log => {
     const matchesSearch = log.ticket_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (log.registration_name && log.registration_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (log.registration_mobile && log.registration_mobile.includes(searchTerm)) ||
@@ -103,7 +86,18 @@ export default function ScanLogs() {
     const matchesAction = actionFilter === 'ALL' || log.action === actionFilter
 
     return matchesSearch && matchesAction
-  }))
+  }).sort((a, b) => new Date(b.scanned_at).getTime() - new Date(a.scanned_at).getTime())
+
+  // Pagination
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedLogs = filteredLogs.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, actionFilter])
 
   const handleDeleteAllLogs = async () => {
     const token = localStorage.getItem('access_token')
@@ -324,6 +318,27 @@ export default function ScanLogs() {
             <option value="CHECK_IN">Check In</option>
             <option value="SCAN_FAILED">Scan Failed</option>
           </select>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value))
+              setCurrentPage(1)
+            }}
+            style={{
+              padding: '12px 16px',
+              border: '1px solid #d0d0d0',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontFamily: "'Inter', sans-serif",
+              minWidth: '120px',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="25">25 per page</option>
+            <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
+            <option value="200">200 per page</option>
+          </select>
           <button
             onClick={exportToCSV}
             style={{
@@ -485,11 +500,12 @@ export default function ScanLogs() {
               </tr>
             </thead>
             <tbody>
-              {filteredLogs.map((log, index) => {
+              {paginatedLogs.map((log, index) => {
                 const actionColor = getActionColor(log.action)
+                const globalIndex = startIndex + index + 1
                 return (
                   <tr key={log.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                    <td style={{ padding: '12px', fontSize: '14px', color: '#666' }}>{index + 1}</td>
+                    <td style={{ padding: '12px', fontSize: '14px', color: '#666' }}>{globalIndex}</td>
                     <td style={{ padding: '12px', fontSize: '13px', color: '#666' }}>
                       {new Date(log.scanned_at).toLocaleString('en-IN', {
                         timeZone: 'Asia/Kolkata',
@@ -547,6 +563,91 @@ export default function ScanLogs() {
             </p>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {filteredLogs.length > 0 && totalPages > 1 && (
+          <div style={{
+            marginTop: '20px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '10px',
+            flexWrap: 'wrap',
+          }}>
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: currentPage === 1 ? '#e0e0e0' : '#0066cc',
+                color: currentPage === 1 ? '#999' : '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              }}
+            >
+              First
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: currentPage === 1 ? '#e0e0e0' : '#0066cc',
+                color: currentPage === 1 ? '#999' : '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              }}
+            >
+              Previous
+            </button>
+            <span style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#333',
+            }}>
+              Page {currentPage} of {totalPages} ({filteredLogs.length} total entries)
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: currentPage === totalPages ? '#e0e0e0' : '#0066cc',
+                color: currentPage === totalPages ? '#999' : '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              }}
+            >
+              Next
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: currentPage === totalPages ? '#e0e0e0' : '#0066cc',
+                color: currentPage === totalPages ? '#999' : '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              }}
+            >
+              Last
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}

@@ -255,13 +255,27 @@ export default function IDCardPage() {
   }
 
   const handleBulkDownload = async () => {
-    if (filteredRegistrations.length === 0) {
+    // Calculate filtered registrations at the time of download
+    const currentFilteredRegistrations = registrations.filter(reg => {
+      const searchLower = searchTerm.toLowerCase()
+      const matchesSearch = (reg.name?.toLowerCase() || '').includes(searchLower) ||
+        (reg.ticket_no?.toLowerCase() || '').includes(searchLower) ||
+        (reg.email?.toLowerCase() || '').includes(searchLower) ||
+        (reg.mobile_number || '').includes(searchTerm)
+
+      const categoryGroup = getCategoryGroup(reg)
+      const matchesCategory = selectedCategory === 'ALL' || categoryGroup === selectedCategory
+
+      return matchesSearch && matchesCategory
+    })
+
+    if (currentFilteredRegistrations.length === 0) {
       alert('No registrations to download')
       return
     }
 
     const categoryLabel = selectedCategory === 'ALL' ? 'all categories' : categories.find(c => c.key === selectedCategory)?.label
-    if (!confirm(`Download ${filteredRegistrations.length} ID cards for ${categoryLabel} as a ZIP file?`)) {
+    if (!confirm(`Download ${currentFilteredRegistrations.length} ID cards for ${categoryLabel} as a ZIP file?`)) {
       return
     }
 
@@ -289,7 +303,7 @@ export default function IDCardPage() {
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-        alert(`ZIP downloaded successfully! (${filteredRegistrations.length} ID cards)`)
+        alert(`ZIP downloaded successfully! (${currentFilteredRegistrations.length} ID cards)`)
       } else {
         const errData = await response.json().catch(() => ({}))
         alert(`Failed to generate ZIP: ${errData.error || response.statusText}`)
@@ -370,10 +384,11 @@ export default function IDCardPage() {
   }
 
   const filteredRegistrations = registrations.filter(reg => {
-    const matchesSearch = reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.ticket_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.mobile_number.includes(searchTerm)
+    const searchLower = searchTerm.toLowerCase()
+    const matchesSearch = (reg.name?.toLowerCase() || '').includes(searchLower) ||
+      (reg.ticket_no?.toLowerCase() || '').includes(searchLower) ||
+      (reg.email?.toLowerCase() || '').includes(searchLower) ||
+      (reg.mobile_number || '').includes(searchTerm)
 
     const categoryGroup = getCategoryGroup(reg)
     const matchesCategory = selectedCategory === 'ALL' || categoryGroup === selectedCategory

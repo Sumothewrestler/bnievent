@@ -4,7 +4,7 @@ from .views import (
     RegistrationViewSet, EventSettingsViewSet, ScanLogViewSet, SponsorViewSet,
     SponsorTicketLimitViewSet, BNIMemberViewSet, IDCardTemplateViewSet, bulk_registration,
     sync_members_to_database, get_bulk_registrations, get_bulk_group_details,
-    scan_ticket, scan_qr_dual_behavior, submit_feedback, check_feedback_status, get_all_feedback,
+    scan_ticket, scan_qr_dual_behavior, submit_feedback, check_feedback_status, get_all_feedback, delete_feedback,
     vip_registration,
     special_registration
 )
@@ -37,6 +37,7 @@ urlpatterns = [
     path('feedback/submit/', submit_feedback, name='submit_feedback'),
     path('feedback/check/<str:ticket_no>/', check_feedback_status, name='check_feedback_status'),
     path('feedback/all/', get_all_feedback, name='get_all_feedback'),
+    path('feedback/delete/<int:feedback_id>/', delete_feedback, name='delete_feedback'),
     # Payment endpoints
     path('payment/create-order/', create_payment_order, name='create_payment_order'),
     path('payment/verify/', verify_payment, name='verify_payment'),

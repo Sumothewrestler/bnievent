@@ -193,32 +193,26 @@ class IDCardTemplateSerializer(serializers.ModelSerializer):
 
 
 class EventFeedbackSerializer(serializers.ModelSerializer):
-    """Serializer for event feedback and ratings"""
+    """Serializer for event feedback and ratings - Simplified version"""
     ticket_no = serializers.CharField(source='registration.ticket_no', read_only=True)
     attendee_name = serializers.CharField(source='registration.name', read_only=True)
+    attendee_mobile = serializers.CharField(source='registration.mobile_number', read_only=True)
     registration_category = serializers.CharField(source='registration.registration_for', read_only=True)
     average_rating = serializers.SerializerMethodField()
-    nps_category = serializers.SerializerMethodField()
 
     class Meta:
         model = EventFeedback
         fields = [
-            'id', 'registration', 'ticket_no', 'attendee_name', 'registration_category',
-            'overall_rating', 'venue_rating', 'food_rating', 'speaker_rating',
-            'networking_rating', 'organization_rating', 'recommendation_score',
-            'liked_most', 'improvements', 'additional_comments', 'attend_future',
+            'id', 'registration', 'ticket_no', 'attendee_name', 'attendee_mobile', 'registration_category',
+            'overall_rating', 'speaker_rating', 'attend_future',
             'submitted_at', 'ip_address', 'user_agent',
-            'average_rating', 'nps_category'
+            'average_rating'
         ]
-        read_only_fields = ['id', 'submitted_at', 'ticket_no', 'attendee_name', 'registration_category']
+        read_only_fields = ['id', 'submitted_at', 'ticket_no', 'attendee_name', 'attendee_mobile', 'registration_category']
 
     def get_average_rating(self, obj):
         """Get calculated average rating"""
         return obj.get_average_rating()
-
-    def get_nps_category(self, obj):
-        """Get NPS category (Promoter/Passive/Detractor)"""
-        return obj.get_nps_category()
 
     def validate_registration(self, value):
         """Ensure feedback hasn't already been submitted for this registration"""
@@ -237,10 +231,7 @@ class EventFeedbackSubmitSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventFeedback
         fields = [
-            'ticket_no', 'overall_rating', 'venue_rating', 'food_rating',
-            'speaker_rating', 'networking_rating', 'organization_rating',
-            'recommendation_score', 'liked_most', 'improvements',
-            'additional_comments', 'attend_future'
+            'ticket_no', 'overall_rating', 'speaker_rating', 'attend_future'
         ]
 
     def validate_ticket_no(self, value):

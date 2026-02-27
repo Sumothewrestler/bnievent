@@ -329,20 +329,20 @@ class IDCardTemplateAdmin(admin.ModelAdmin):
 
 @admin.register(EventFeedback)
 class EventFeedbackAdmin(admin.ModelAdmin):
-    """Admin interface for event feedback"""
+    """Admin interface for event feedback - Simplified version"""
     list_display = [
         'ticket_no_display', 'attendee_name', 'registration_category',
-        'overall_rating_display', 'nps_category_display',
+        'overall_rating_display', 'speaker_rating_display', 'attend_future_display',
         'submitted_at'
     ]
     list_filter = [
-        'overall_rating', 'recommendation_score',
+        'overall_rating', 'speaker_rating',
         'attend_future', 'registration__registration_for',
         'submitted_at'
     ]
     search_fields = [
         'registration__ticket_no', 'registration__name',
-        'registration__email', 'liked_most', 'improvements'
+        'registration__email'
     ]
     readonly_fields = [
         'registration', 'submitted_at', 'ip_address',
@@ -357,16 +357,11 @@ class EventFeedbackAdmin(admin.ModelAdmin):
         }),
         ('Star Ratings (1-5)', {
             'fields': (
-                'overall_rating', 'venue_rating', 'food_rating',
-                'speaker_rating', 'networking_rating', 'organization_rating',
-                'average_rating_display'
+                'overall_rating', 'speaker_rating', 'average_rating_display'
             )
         }),
-        ('Net Promoter Score', {
-            'fields': ('recommendation_score',)
-        }),
-        ('Open-Ended Feedback', {
-            'fields': ('liked_most', 'improvements', 'additional_comments', 'attend_future')
+        ('BNI Chettinad Interest', {
+            'fields': ('attend_future',)
         }),
         ('Technical Details', {
             'fields': ('ip_address', 'user_agent'),
@@ -399,32 +394,40 @@ class EventFeedbackAdmin(admin.ModelAdmin):
             obj.overall_rating,
             stars
         )
-    overall_rating_display.short_description = 'Overall Rating'
+    overall_rating_display.short_description = 'Overall'
 
-    def nps_category_display(self, obj):
-        """Display NPS category with color coding"""
-        category = obj.get_nps_category()
-        if not category:
-            return '-'
+    def speaker_rating_display(self, obj):
+        """Display speaker rating with stars"""
+        stars = '⭐' * obj.speaker_rating
+        color = '#28a745' if obj.speaker_rating >= 4 else '#ffc107' if obj.speaker_rating >= 3 else '#dc3545'
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 4px 8px; border-radius: 3px; font-weight: 600;">{} {}</span>',
+            color,
+            obj.speaker_rating,
+            stars
+        )
+    speaker_rating_display.short_description = 'Speaker'
 
+    def attend_future_display(self, obj):
+        """Display willingness to join BNI with color coding"""
         colors = {
-            'Promoter': '#28a745',   # Green
-            'Passive': '#ffc107',    # Yellow
-            'Detractor': '#dc3545',  # Red
+            'YES': '#28a745',   # Green
+            'MAYBE': '#ffc107',  # Yellow
+            'NO': '#dc3545',     # Red
         }
-        color = colors.get(category, '#6c757d')
+        color = colors.get(obj.attend_future, '#6c757d')
         return format_html(
             '<span style="background-color: {}; color: white; padding: 4px 8px; border-radius: 3px; font-weight: 600;">{}</span>',
             color,
-            category
+            obj.get_attend_future_display()
         )
-    nps_category_display.short_description = 'NPS Category'
+    attend_future_display.short_description = 'Join BNI?'
 
     def average_rating_display(self, obj):
-        """Display average of all ratings"""
+        """Display average of overall and speaker ratings"""
         avg = obj.get_average_rating()
         return format_html(
-            '<span style="font-weight: bold; font-size: 14px;">{:.2f} / 5.0</span>',
+            '<span style="font-weight: bold; font-size: 14px;">{:.1f} / 5.0</span>',
             avg
         )
     average_rating_display.short_description = 'Average Rating'
